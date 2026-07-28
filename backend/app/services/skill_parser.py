@@ -5,6 +5,8 @@ from pathlib import Path
 
 import frontmatter
 
+from app import messages as msg
+
 
 class SkillParseError(Exception):
     pass
@@ -71,7 +73,7 @@ def parse_skill_zip(data: bytes) -> dict:
             names = [n for n in zf.namelist() if not n.endswith("/")]
             skill_md_name = _find_skill_md(names)
             if not skill_md_name:
-                raise SkillParseError("SKILL.md not found in ZIP")
+                raise SkillParseError(msg.SKILL_MD_NOT_FOUND_IN_ZIP)
 
             raw = zf.read(skill_md_name).decode("utf-8", errors="replace")
             parsed = parse_skill_markdown(raw)
@@ -88,7 +90,7 @@ def parse_skill_zip(data: bytes) -> dict:
             parsed["file_list"] = names
             return parsed
     except zipfile.BadZipFile as e:
-        raise SkillParseError("Invalid ZIP file") from e
+        raise SkillParseError(msg.INVALID_ZIP) from e
 
 
 def parse_skill_directory(skill_dir: Path) -> dict:
@@ -97,7 +99,7 @@ def parse_skill_directory(skill_dir: Path) -> dict:
     if not skill_md.exists():
         skill_md = skill_dir / "skill.md"
     if not skill_md.exists():
-        raise SkillParseError(f"SKILL.md missing: {skill_dir}")
+        raise SkillParseError(msg.skill_md_missing(skill_dir))
 
     raw = skill_md.read_text(encoding="utf-8", errors="replace")
     parsed = parse_skill_markdown(raw)

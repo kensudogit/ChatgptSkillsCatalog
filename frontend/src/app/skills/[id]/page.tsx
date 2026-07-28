@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, type Skill } from "@/lib/api";
+import { confirmDeleteMessage, messages, sourceLabel } from "@/lib/messages";
 
 export default function SkillDetailPage() {
   const params = useParams();
@@ -18,17 +19,19 @@ export default function SkillDetailPage() {
     api
       .getSkill(id)
       .then(setSkill)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : messages.common.loadFailed)
+      );
   }, [id]);
 
   async function onDelete() {
-    if (!skill || !confirm(`Delete "${skill.name}"?`)) return;
+    if (!skill || !confirm(confirmDeleteMessage(skill.name))) return;
     setDeleting(true);
     try {
       await api.deleteSkill(skill.id);
       router.push("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed");
+      setError(e instanceof Error ? e.message : messages.common.deleteFailed);
       setDeleting(false);
     }
   }
@@ -38,7 +41,7 @@ export default function SkillDetailPage() {
   }
 
   if (!skill) {
-    return <div className="loading">Loading...</div>;
+    return <div className="loading">{messages.common.loading}</div>;
   }
 
   return (
@@ -47,14 +50,14 @@ export default function SkillDetailPage() {
         <div>
           <p style={{ margin: "0 0 0.5rem" }}>
             <Link href="/" style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
-              Back to catalog
+              {messages.detail.back}
             </Link>
           </p>
           <h1>{skill.name}</h1>
-          <p>{skill.description || "No description"}</p>
+          <p>{skill.description || messages.common.noDescription}</p>
         </div>
         <button className="btn btn-danger" onClick={onDelete} disabled={deleting}>
-          {deleting ? "Deleting..." : "Delete"}
+          {deleting ? messages.common.deleting : messages.common.delete}
         </button>
       </div>
 
@@ -64,27 +67,33 @@ export default function SkillDetailPage() {
         <div className="panel">
           <h2 style={{ marginTop: 0, fontSize: "1rem" }}>SKILL.md</h2>
           <pre className="markdown-preview">
-            {skill.skill_md_content || "(empty)"}
+            {skill.skill_md_content || messages.detail.emptyBody}
           </pre>
         </div>
 
         <aside className="panel" style={{ alignSelf: "start" }}>
           <h2 style={{ marginTop: 0, fontSize: "0.85rem", color: "var(--text-dim)" }}>
-            Metadata
+            {messages.detail.metadata}
           </h2>
           <dl style={{ margin: 0, display: "grid", gap: "0.85rem", fontSize: "0.9rem" }}>
-            <Meta label="Source" value={skill.source_type} />
-            <Meta label="Category" value={skill.category} />
-            <Meta label="Version" value={skill.version} />
-            <Meta label="Author" value={skill.author} />
-            <Meta label="Filename" value={skill.original_filename} />
-            <Meta label="Git path" value={skill.git_path} />
             <Meta
-              label="Commit"
+              label={messages.detail.labelSource}
+              value={sourceLabel(skill.source_type)}
+            />
+            <Meta label={messages.detail.labelCategory} value={skill.category} />
+            <Meta label={messages.detail.labelVersion} value={skill.version} />
+            <Meta label={messages.detail.labelAuthor} value={skill.author} />
+            <Meta
+              label={messages.detail.labelFilename}
+              value={skill.original_filename}
+            />
+            <Meta label={messages.detail.labelGitPath} value={skill.git_path} />
+            <Meta
+              label={messages.detail.labelCommit}
               value={skill.git_commit ? skill.git_commit.slice(0, 8) : null}
             />
             <Meta
-              label="Updated"
+              label={messages.detail.labelUpdated}
               value={new Date(skill.updated_at).toLocaleString("ja-JP")}
             />
           </dl>

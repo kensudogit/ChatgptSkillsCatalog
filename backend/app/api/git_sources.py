@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app import messages as msg
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.git_source import GitSource
@@ -38,7 +39,9 @@ def create_git_source(
         select(GitSource).where(GitSource.repository_url == payload.repository_url)
     )
     if existing:
-        raise HTTPException(status_code=409, detail="This repository URL is already registered")
+        raise HTTPException(
+            status_code=409, detail=msg.REPOSITORY_ALREADY_REGISTERED
+        )
 
     source = GitSource(
         name=payload.name,
@@ -57,7 +60,7 @@ def create_git_source(
 def get_git_source(source_id: int, db: Session = Depends(get_db)):
     source = db.get(GitSource, source_id)
     if not source:
-        raise HTTPException(status_code=404, detail="Git source not found")
+        raise HTTPException(status_code=404, detail=msg.GIT_SOURCE_NOT_FOUND)
     count = db.scalar(
         select(func.count(Skill.id)).where(Skill.git_source_id == source.id)
     ) or 0
@@ -72,7 +75,7 @@ def update_git_source(
 ):
     source = db.get(GitSource, source_id)
     if not source:
-        raise HTTPException(status_code=404, detail="Git source not found")
+        raise HTTPException(status_code=404, detail=msg.GIT_SOURCE_NOT_FOUND)
 
     data = payload.model_dump(exclude_unset=True)
     for key, value in data.items():
@@ -89,7 +92,7 @@ def update_git_source(
 def delete_git_source(source_id: int, db: Session = Depends(get_db)):
     source = db.get(GitSource, source_id)
     if not source:
-        raise HTTPException(status_code=404, detail="Git source not found")
+        raise HTTPException(status_code=404, detail=msg.GIT_SOURCE_NOT_FOUND)
     # Skills remain but lose git_source_id via FK SET NULL
     db.delete(source)
     db.commit()
@@ -104,7 +107,7 @@ def sync_git_source(
 ):
     source = db.get(GitSource, source_id)
     if not source:
-        raise HTTPException(status_code=404, detail="Git source not found")
+        raise HTTPException(status_code=404, detail=msg.GIT_SOURCE_NOT_FOUND)
 
     result = GitSyncService(settings).sync(db, source)
     if result["status"] == "error":

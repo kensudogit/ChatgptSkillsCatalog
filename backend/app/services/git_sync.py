@@ -8,6 +8,7 @@ from git.exc import GitCommandError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import messages as msg
 from app.config import Settings
 from app.models.git_source import GitSource
 from app.models.skill import Skill, SkillTag
@@ -55,7 +56,7 @@ class GitSyncService:
                 search_root = workdir / source.skills_subdir
                 if not search_root.exists():
                     raise FileNotFoundError(
-                        f"skills_subdir does not exist: {source.skills_subdir}"
+                        msg.subdir_missing(source.skills_subdir)
                     )
 
             skill_dirs = _discover_skill_dirs(search_root)
@@ -118,9 +119,8 @@ class GitSyncService:
 
             source.last_synced_at = datetime.now(timezone.utc)
             source.last_sync_status = "success"
-            source.last_sync_message = (
-                f"imported={imported}, updated={updated}, skipped={skipped}, "
-                f"commit={commit[:8]}"
+            source.last_sync_message = msg.sync_summary(
+                imported, updated, skipped, commit
             )
             db.commit()
             return {

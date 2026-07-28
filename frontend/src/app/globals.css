@@ -15,8 +15,10 @@
   --danger: #d4544f;
   --info: #4a8fd4;
   --radius: 6px;
-  --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "Consolas", monospace;
+  --font-display: "IBM Plex Sans", "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", monospace;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 

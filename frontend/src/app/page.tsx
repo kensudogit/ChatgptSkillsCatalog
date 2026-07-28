@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, type Skill, type SkillListResponse } from "@/lib/api";
+import { messages, pageRangeLabel, sourceLabel } from "@/lib/messages";
 
 export default function HomePage() {
   const [data, setData] = useState<SkillListResponse | null>(null);
@@ -27,7 +28,7 @@ export default function HomePage() {
       });
       setData(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : messages.common.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -46,18 +47,15 @@ export default function HomePage() {
     <>
       <div className="page-header">
         <div>
-          <h1>Skills Catalog</h1>
-          <p>
-            Centralize, search, and share ChatGPT Skills across the organization.
-            Register via ZIP upload or Git repository sync.
-          </p>
+          <h1>{messages.catalog.title}</h1>
+          <p>{messages.catalog.lead}</p>
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <Link href="/upload" className="btn btn-primary">
-            Upload ZIP
+            {messages.catalog.uploadZip}
           </Link>
           <Link href="/git" className="btn btn-ghost">
-            Git Sync
+            {messages.catalog.gitSync}
           </Link>
         </div>
       </div>
@@ -65,7 +63,7 @@ export default function HomePage() {
       <div className="toolbar">
         <input
           className="search-input"
-          placeholder="Search name, description, tags..."
+          placeholder={messages.catalog.searchPlaceholder}
           value={q}
           onChange={(e) => {
             setPage(1);
@@ -80,7 +78,7 @@ export default function HomePage() {
             setCategory(e.target.value);
           }}
         >
-          <option value="">All categories</option>
+          <option value="">{messages.catalog.allCategories}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -95,22 +93,22 @@ export default function HomePage() {
             setSourceType(e.target.value);
           }}
         >
-          <option value="">All sources</option>
-          <option value="upload">Upload</option>
-          <option value="git">Git</option>
+          <option value="">{messages.catalog.allSources}</option>
+          <option value="upload">{messages.common.sourceUpload}</option>
+          <option value="git">{messages.common.sourceGit}</option>
         </select>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading && !data ? (
-        <div className="loading">Loading...</div>
+        <div className="loading">{messages.common.loading}</div>
       ) : data && data.items.length === 0 ? (
         <div className="empty-state">
-          <p>No matching skills found.</p>
+          <p>{messages.catalog.emptyTitle}</p>
           <p style={{ marginTop: "0.5rem" }}>
             <Link href="/upload" style={{ color: "var(--accent-hover)" }}>
-              Upload the first skill
+              {messages.catalog.emptyAction}
             </Link>
           </p>
         </div>
@@ -124,8 +122,11 @@ export default function HomePage() {
           {data && (
             <div className="pagination">
               <span className="stat-inline">
-                {data.total} total / {(page - 1) * data.page_size + 1}-
-                {Math.min(page * data.page_size, data.total)}
+                {pageRangeLabel(
+                  data.total,
+                  (page - 1) * data.page_size + 1,
+                  Math.min(page * data.page_size, data.total)
+                )}
               </span>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <button
@@ -133,14 +134,14 @@ export default function HomePage() {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Prev
+                  {messages.catalog.prev}
                 </button>
                 <button
                   className="btn btn-ghost"
                   disabled={page * data.page_size >= data.total}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  {messages.catalog.next}
                 </button>
               </div>
             </div>
@@ -162,13 +163,13 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
         <span
           className={`badge ${skill.source_type === "git" ? "badge-info" : "badge-accent"}`}
         >
-          {skill.source_type === "git" ? "git" : "upload"}
+          {sourceLabel(skill.source_type)}
         </span>
         {skill.category && <span className="badge">{skill.category}</span>}
         {skill.version && <span className="badge">v{skill.version}</span>}
       </div>
       <h2>{skill.name}</h2>
-      <p className="desc">{skill.description || "No description"}</p>
+      <p className="desc">{skill.description || messages.common.noDescription}</p>
       <div className="meta-row">
         {skill.tags.slice(0, 4).map((t) => (
           <span key={t} className="badge">

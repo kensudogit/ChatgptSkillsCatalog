@@ -1,4 +1,3 @@
-# ECS Task Definition (Fargate) — substitute placeholders before register-task-definition
 {
   "family": "skills-catalog",
   "networkMode": "awsvpc",

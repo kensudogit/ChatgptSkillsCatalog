@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useState, type DragEvent } from "react";
 import { api } from "@/lib/api";
+import { messages } from "@/lib/messages";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function UploadPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!file) {
-      setError("Please select a ZIP file");
+      setError(messages.upload.requireFile);
       return;
     }
     setLoading(true);
@@ -45,7 +46,7 @@ export default function UploadPage() {
       const skill = await api.uploadSkill(form);
       router.push(`/skills/${skill.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : messages.upload.failed);
     } finally {
       setLoading(false);
     }
@@ -55,11 +56,8 @@ export default function UploadPage() {
     <>
       <div className="page-header">
         <div>
-          <h1>Upload Skill</h1>
-          <p>
-            Register a ChatGPT / Cursor Skill ZIP that contains SKILL.md.
-            Metadata is extracted from YAML frontmatter when available.
-          </p>
+          <h1>{messages.upload.title}</h1>
+          <p>{messages.upload.lead}</p>
         </div>
       </div>
 
@@ -85,21 +83,22 @@ export default function UploadPage() {
           />
           {file ? (
             <p>
-              Selected: <strong style={{ color: "var(--text)" }}>{file.name}</strong>
+              {messages.upload.selected}:{" "}
+              <strong style={{ color: "var(--text)" }}>{file.name}</strong>
               <br />
               <span className="stat-inline">{(file.size / 1024).toFixed(1)} KB</span>
             </p>
           ) : (
             <p>
-              Drag and drop a ZIP, or click to choose
+              {messages.upload.dropHint}
               <br />
-              <span className="stat-inline">SKILL.md required / max 50MB</span>
+              <span className="stat-inline">{messages.upload.dropNote}</span>
             </p>
           )}
         </div>
 
         <label>
-          Name (optional)
+          {messages.upload.labelName}
           <input
             className="text-input"
             value={name}
@@ -109,7 +108,7 @@ export default function UploadPage() {
         </label>
 
         <label>
-          Description (optional)
+          {messages.upload.labelDescription}
           <textarea
             className="textarea"
             rows={3}
@@ -126,7 +125,7 @@ export default function UploadPage() {
           }}
         >
           <label>
-            Category
+            {messages.upload.labelCategory}
             <input
               className="text-input"
               value={category}
@@ -135,7 +134,7 @@ export default function UploadPage() {
             />
           </label>
           <label>
-            Author
+            {messages.upload.labelAuthor}
             <input
               className="text-input"
               value={author}
@@ -143,7 +142,7 @@ export default function UploadPage() {
             />
           </label>
           <label>
-            Version
+            {messages.upload.labelVersion}
             <input
               className="text-input"
               value={version}
@@ -154,7 +153,7 @@ export default function UploadPage() {
         </div>
 
         <label>
-          Tags (comma-separated)
+          {messages.upload.labelTags}
           <input
             className="text-input"
             value={tags}
@@ -165,14 +164,14 @@ export default function UploadPage() {
 
         <div className="form-actions">
           <button className="btn btn-primary" type="submit" disabled={loading}>
-            {loading ? "Uploading..." : "Register"}
+            {loading ? messages.upload.submitting : messages.common.register}
           </button>
           <button
             className="btn btn-ghost"
             type="button"
             onClick={() => router.push("/")}
           >
-            Cancel
+            {messages.common.cancel}
           </button>
         </div>
       </form>

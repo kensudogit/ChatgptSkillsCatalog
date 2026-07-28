@@ -2,6 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api, type GitSource, type SyncResult } from "@/lib/api";
+import {
+  confirmDeleteMessage,
+  messages,
+  syncStatusLabel,
+  syncSummary,
+} from "@/lib/messages";
 
 export default function GitPage() {
   const [sources, setSources] = useState<GitSource[]>([]);
@@ -23,7 +29,7 @@ export default function GitPage() {
     try {
       setSources(await api.listGitSources());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : messages.common.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -51,10 +57,10 @@ export default function GitPage() {
       setBranch("main");
       setSubdir("");
       setToken("");
-      setSuccess("Git source registered. Run sync to import skills.");
+      setSuccess(messages.git.created);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : messages.git.registerFailed);
     } finally {
       setSubmitting(false);
     }
@@ -68,26 +74,26 @@ export default function GitPage() {
       const result: SyncResult = await api.syncGitSource(id);
       if (result.status === "success") {
         setSuccess(
-          `Sync complete: imported ${result.imported} / updated ${result.updated} / skipped ${result.skipped}`
+          syncSummary(result.imported, result.updated, result.skipped)
         );
       } else {
-        setError(result.message || "Sync failed");
+        setError(result.message || messages.git.syncFailed);
       }
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync failed");
+      setError(err instanceof Error ? err.message : messages.git.syncFailed);
     } finally {
       setSyncingId(null);
     }
   }
 
   async function onDelete(source: GitSource) {
-    if (!confirm(`Delete "${source.name}"?`)) return;
+    if (!confirm(confirmDeleteMessage(source.name))) return;
     try {
       await api.deleteGitSource(source.id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(err instanceof Error ? err.message : messages.common.deleteFailed);
     }
   }
 
@@ -95,11 +101,8 @@ export default function GitPage() {
     <>
       <div className="page-header">
         <div>
-          <h1>Git Repository Sync</h1>
-          <p>
-            Register a Git repository that stores Skills, then scan for SKILL.md
-            and import them into the catalog.
-          </p>
+          <h1>{messages.git.title}</h1>
+          <p>{messages.git.lead}</p>
         </div>
       </div>
 
@@ -107,19 +110,19 @@ export default function GitPage() {
       {success && <div className="alert alert-success">{success}</div>}
 
       <form className="panel form-grid" onSubmit={onCreate} style={{ marginBottom: "1.5rem" }}>
-        <h2 style={{ margin: 0, fontSize: "1.05rem" }}>Register source</h2>
+        <h2 style={{ margin: 0, fontSize: "1.05rem" }}>{messages.git.formTitle}</h2>
         <label>
-          Display name
+          {messages.git.labelName}
           <input
             className="text-input"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Design team skills"
+            placeholder={messages.git.placeholderName}
           />
         </label>
         <label>
-          Repository URL
+          {messages.git.labelUrl}
           <input
             className="text-input"
             required
@@ -136,7 +139,7 @@ export default function GitPage() {
           }}
         >
           <label>
-            Branch
+            {messages.git.labelBranch}
             <input
               className="text-input"
               value={branch}
@@ -144,7 +147,7 @@ export default function GitPage() {
             />
           </label>
           <label>
-            Skills subdirectory (optional)
+            {messages.git.labelSubdir}
             <input
               className="text-input"
               value={subdir}
@@ -154,7 +157,7 @@ export default function GitPage() {
           </label>
         </div>
         <label>
-          Access token (optional, for private repos)
+          {messages.git.labelToken}
           <input
             className="text-input"
             type="password"
@@ -165,27 +168,27 @@ export default function GitPage() {
         </label>
         <div className="form-actions">
           <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : "Register"}
+            {submitting ? messages.common.saving : messages.common.register}
           </button>
         </div>
       </form>
 
       <div className="panel" style={{ padding: 0, overflow: "auto" }}>
         {loading ? (
-          <div className="loading">Loading...</div>
+          <div className="loading">{messages.common.loading}</div>
         ) : sources.length === 0 ? (
           <div className="empty-state" style={{ border: "none" }}>
-            No Git sources registered yet.
+            {messages.git.empty}
           </div>
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Repository</th>
-                <th>Status</th>
-                <th>Skills</th>
-                <th>Actions</th>
+                <th>{messages.git.thName}</th>
+                <th>{messages.git.thRepo}</th>
+                <th>{messages.git.thStatus}</th>
+                <th>{messages.git.thSkills}</th>
+                <th>{messages.git.thActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -196,7 +199,7 @@ export default function GitPage() {
                     <div className="stat-inline">
                       {s.branch}
                       {s.skills_subdir ? ` / ${s.skills_subdir}` : ""}
-                      {s.has_token ? " / token" : ""}
+                      {s.has_token ? ` / ${messages.git.tokenSet}` : ""}
                     </div>
                   </td>
                   <td>
@@ -206,7 +209,7 @@ export default function GitPage() {
                   </td>
                   <td>
                     <span className="badge badge-accent">
-                      {s.last_sync_status || "never"}
+                      {syncStatusLabel(s.last_sync_status)}
                     </span>
                     {s.last_synced_at && (
                       <div className="stat-inline" style={{ marginTop: 4 }}>
@@ -232,10 +235,10 @@ export default function GitPage() {
                         onClick={() => onSync(s.id)}
                         disabled={syncingId === s.id}
                       >
-                        {syncingId === s.id ? "Syncing..." : "Sync"}
+                        {syncingId === s.id ? messages.git.syncing : messages.git.sync}
                       </button>
                       <button className="btn btn-danger" onClick={() => onDelete(s)}>
-                        Delete
+                        {messages.common.delete}
                       </button>
                     </div>
                   </td>

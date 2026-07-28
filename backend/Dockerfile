@@ -16,6 +16,9 @@ COPY app ./app
 RUN mkdir -p /app/uploads /app/git_repos
 
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
     UPLOAD_DIR=/app/uploads \
     GIT_WORKDIR=/app/git_repos
 

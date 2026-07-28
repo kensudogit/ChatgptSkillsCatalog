@@ -37,6 +37,9 @@ COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh && mkdir -p /app/uploads /app/git_repos
 
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
     NODE_ENV=production \
     UPLOAD_DIR=/app/uploads \
     GIT_WORKDIR=/app/git_repos \

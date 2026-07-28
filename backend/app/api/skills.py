@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app import messages as msg
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.skill import Skill, SkillTag
@@ -21,7 +22,7 @@ def _apply_tags(skill: Skill, tags: list[str]) -> None:
 
 @router.get("", response_model=SkillListResponse)
 def list_skills(
-    q: str | None = Query(None, description="Full-text search over name, description and tags"),
+    q: str | None = Query(None, description=msg.QUERY_SEARCH),
     category: str | None = None,
     source_type: str | None = None,
     tag: str | None = None,
@@ -94,7 +95,7 @@ def get_skill(skill_id: int, db: Session = Depends(get_db)):
         select(Skill).options(selectinload(Skill.tags)).where(Skill.id == skill_id)
     )
     if not skill:
-        raise HTTPException(status_code=404, detail="Skill not found")
+        raise HTTPException(status_code=404, detail=msg.SKILL_NOT_FOUND)
     return SkillOut.from_orm_skill(skill)
 
 
@@ -106,19 +107,19 @@ async def upload_skill(
     category: str | None = Form(None),
     author: str | None = Form(None),
     version: str | None = Form(None),
-    tags: str | None = Form(None, description="Comma-separated tags"),
+    tags: str | None = Form(None, description=msg.QUERY_TAGS),
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
     if not file.filename or not file.filename.lower().endswith(".zip"):
-        raise HTTPException(status_code=400, detail="Please upload a ZIP file")
+        raise HTTPException(status_code=400, detail=msg.ZIP_REQUIRED)
 
     data = await file.read()
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     if len(data) > max_bytes:
         raise HTTPException(
             status_code=400,
-            detail=f"File exceeds size limit ({settings.max_upload_size_mb}MB)",
+            detail=msg.file_too_large(settings.max_upload_size_mb),
         )
 
     try:
@@ -167,7 +168,7 @@ def update_skill(
         select(Skill).options(selectinload(Skill.tags)).where(Skill.id == skill_id)
     )
     if not skill:
-        raise HTTPException(status_code=404, detail="Skill not found")
+        raise HTTPException(status_code=404, detail=msg.SKILL_NOT_FOUND)
 
     data = payload.model_dump(exclude_unset=True)
     tags = data.pop("tags", None)
@@ -191,7 +192,7 @@ def delete_skill(
 ):
     skill = db.get(Skill, skill_id)
     if not skill:
-        raise HTTPException(status_code=404, detail="Skill not found")
+        raise HTTPException(status_code=404, detail=msg.SKILL_NOT_FOUND)
 
     if skill.storage_path:
         StorageService(settings).delete(skill.storage_path)
