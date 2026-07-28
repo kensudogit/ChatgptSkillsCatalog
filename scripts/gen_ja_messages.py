@@ -242,4 +242,6 @@ def rewrite_usage_guide(path: Path) -> None:
 if __name__ == "__main__":
     write(FRONTEND_MESSAGES, FRONTEND_TS)
     write(BACKEND_MESSAGES, BACKEND_PY)
-    rewrite_usage_guide(USAGE_GUIDE)
+    # UsageGuide is maintained by scripts/rewrite_usage_guide.py (full UTF-8 rewrite).
+    # Do not unescape it here; that path previously caused mojibake.
+    print("skip UsageGuide (use scripts/rewrite_usage_guide.py)")

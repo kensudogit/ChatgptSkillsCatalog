@@ -8,10 +8,13 @@ const copy = {
   close: "利用手順を閉じる",
   title: "Skills Catalog 利用ガイド",
   lead:
-    "社内の ChatGPT Skills を、ZIP または Git リポジトリから登録し、検索・確認・共有するためのカタログです。",
+    "社内の ChatGPT / Claude / Cursor Skills を、ZIP または Git リポジトリから登録し、検索・確認・共有・ダウンロードするためのカタログです。",
   architecture:
-    "フロントエンドから FastAPI を呼び出し、メタデータを PostgreSQL に保存します。ZIP は開発環境ではローカル、本番 ECS では S3 に保管できます。",
+    "Next.js から FastAPI を呼び出し、メタデータを PostgreSQL に保存します。ZIP は開発環境ではローカル、本番（ECS / Railway）では S3 またはボリュームに保管できます。",
   caution: "運用上の注意",
+  claudeTitle: "Claude / Agent Skills 互換",
+  claudeLead:
+    "登録された Skill は Agent Skills 仕様で Claude 互換性を自動判定します。一覧のバッジと詳細画面の指摘リストで確認できます。",
 };
 
 const techTags = [
@@ -21,15 +24,16 @@ const techTags = [
   "FastAPI",
   "PostgreSQL",
   "Docker",
-  "AWS ECS",
+  "Railway / ECS",
+  "Claude Compat",
   "Git Sync",
 ];
 
 const architectureItems = [
   "Next.js - 一覧・検索・アップロード・詳細・Git 連携",
-  "FastAPI - Skill CRUD・ZIP 解析・Git 同期",
+  "FastAPI - Skill CRUD・ZIP 解析・ダウンロード・Git 同期・Claude 互換判定",
   "PostgreSQL - Skill・タグ・Git ソース情報",
-  "Docker / ECS - 開発環境と AWS 本番実行環境",
+  "Docker / Railway / ECS - 開発環境と本番実行環境",
 ];
 
 const steps = [
@@ -37,40 +41,48 @@ const steps = [
     number: "01",
     title: "カタログを検索する",
     description:
-      "トップ画面の検索欄に名前・説明・タグを入力します。カテゴリと登録元（アップロード / Git 連携）を組み合わせて絞り込めます。",
+      "トップ画面の検索欄に名前・説明・タグを入力します。カテゴリ、タグ、登録元（アップロード / Git 連携）、並び順、Claude 判定で絞り込めます。`/` キーで検索欄にフォーカスできます。",
     note:
-      "カードを選択すると、SKILL.md の内容・作者・バージョン・タグ・更新日時を確認できます。",
+      "カード上の Claude バッジで互換 / 注意 / 非互換を確認できます。タグバッジをクリックするとそのタグで絞り込めます。",
   },
   {
     number: "02",
     title: "ZIP から Skill を登録する",
     description:
-      "アップロード画面を開き、SKILL.md を含む ZIP ファイルをドラッグ＆ドロップします。YAML frontmatter の情報は自動で読み取られます。",
+      "アップロード画面を開き、SKILL.md を含む ZIP をドラッグ＆ドロップします。YAML frontmatter の name / description などは自動で読み取られます。",
     note:
-      "名前・説明・カテゴリ・作者・バージョン・タグは登録時に上書きできます。ファイル上限は 50MB です。",
+      "名前・説明・カテゴリ・作者・バージョン・タグは登録時に上書きできます。ファイル上限は 50MB です。サンプルは samples/sample-pcb-checklist.zip を利用できます。",
   },
   {
     number: "03",
     title: "Git リポジトリを連携する",
     description:
-      "Git 連携画面で表示名、リポジトリ URL、ブランチを登録します。必要に応じて Skills のサブディレクトリとアクセストークンを指定します。",
+      "Git 連携画面で表示名、リポジトリ URL、ブランチを登録します。必要に応じて Skills サブディレクトリとアクセストークンを指定します。",
     note:
-      "同期を実行すると SKILL.md を再帰検索し、新規登録・既存 Skill の更新・削除状態の反映を行います。",
+      "同期を実行すると SKILL.md を再帰検索し、新規登録・更新・削除を反映します。スキップされたパスと理由も画面上で確認できます。",
   },
   {
     number: "04",
-    title: "内容を確認・共有する",
+    title: "詳細を確認・編集・共有する",
     description:
-      "詳細画面で手順本文とメタデータを確認します。共有時はブラウザの詳細画面 URL を社内メンバーへ案内してください。",
+      "詳細画面で Markdown プレビュー（または原文）、メタデータ、Claude 互換性を確認します。編集で名前・説明・タグなどを更新できます。",
     note:
-      "不要になった Skill は詳細画面から削除できます。Git 由来の Skill は次回同期でも状態が更新されます。",
+      "「共有リンクをコピー」で URL を共有できます。「ZIP をダウンロード」で ChatGPT / Claude / Cursor へ取り込めるパッケージを取得できます。",
   },
+];
+
+const claudeRules = [
+  "frontmatter の name は小文字英数字とハイフンのみ（64 文字以内）",
+  "description は必須（1024 文字以内。Claude.ai へのアップロードは 200 文字以内推奨）",
+  "ZIP 内の親フォルダ名は name と完全一致させる（Claude で必須）",
+  "version / author / category / tags はカタログ用メタです。Agent Skills 仕様では metadata: 配下も可",
 ];
 
 const cautions = [
   "機密情報や認証情報を SKILL.md や ZIP に含めないでください。",
   "プライベート Git のトークンは必要最小限の権限にしてください。",
-  "共有前に作者・バージョン・手順内容を確認してください。",
+  "共有・ダウンロード前に作者・バージョン・Claude 互換性・手順内容を確認してください。",
+  "Claude で使う場合は、非互換バッジが付いた Skill のまま配布しないでください。",
 ];
 
 export default function UsageGuide() {
@@ -147,7 +159,7 @@ export default function UsageGuide() {
 
             <div className="guide-content">
               <section className="guide-hero">
-                <p className="guide-eyebrow">CHATGPT SKILLS PLATFORM</p>
+                <p className="guide-eyebrow">CHATGPT / CLAUDE / CURSOR SKILLS</p>
                 <h3>{copy.title}</h3>
                 <p className="guide-lead">{copy.lead}</p>
                 <div className="guide-tags">
@@ -184,35 +196,49 @@ export default function UsageGuide() {
                 ))}
               </section>
 
+              <section className="guide-architecture">
+                <div className="guide-section-title">
+                  <span>COMPATIBILITY</span>
+                  <strong>{copy.claudeTitle}</strong>
+                </div>
+                <p>{copy.claudeLead}</p>
+                <ul>
+                  {claudeRules.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+
               <section className="guide-format">
                 <p className="guide-subheading">ZIP PACKAGE FORMAT</p>
-                <pre>{`my-skill/
-|- SKILL.md       # required
+                <pre>{`pcb-design-review/
+|- SKILL.md       # required (folder name == name)
 |- references/    # optional
-\\- scripts/       # optional`}</pre>
-                <div className="guide-code-caption">SKILL.md frontmatter</div>
+\- scripts/       # optional`}</pre>
+                <div className="guide-code-caption">SKILL.md frontmatter (Claude compatible)</div>
                 <pre>{`---
 name: pcb-design-review
-description: PCB design review support
-version: 1.0.0
-author: design-team
-category: design-review
-tags: [pcb, review]
+description: PCB design review checklist for electronics manufacturing. Use when reviewing board layouts.
+metadata:
+  version: "1.0.0"
+  author: design-team
+  category: design-review
+tags: [pcb, review, quality]
 ---`}</pre>
               </section>
 
               <section className="guide-topology">
                 <p className="guide-subheading">SERVICE TOPOLOGY</p>
                 <pre>{`Browser
-  |- /              Catalog & Search
+  |- /              Catalog, Search, Claude filter
   |- /upload        ZIP Registration
   |- /git           Repository Sync
-  \\- /skills/:id    Skill Detail
+  \- /skills/:id    Detail / Edit / Download / Share
          |
          v
 FastAPI :8000 -- PostgreSQL :5432
          |------ Local Volume / S3
-         \\------ Git Repository`}</pre>
+         \------ Git Repository`}</pre>
               </section>
 
               <section className="guide-caution">
