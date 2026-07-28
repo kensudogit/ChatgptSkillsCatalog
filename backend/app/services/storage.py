@@ -41,6 +41,26 @@ class StorageService:
         )
         return f"s3://{self.settings.s3_bucket}/{s3_key}"
 
+    def read_bytes(self, storage_path: str) -> bytes:
+        if storage_path.startswith("s3://"):
+            return self._read_s3(storage_path)
+        path = Path(storage_path)
+        if not path.exists():
+            raise FileNotFoundError(storage_path)
+        return path.read_bytes()
+
+    def _read_s3(self, storage_path: str) -> bytes:
+        without = storage_path[5:]
+        bucket, _, key = without.partition("/")
+        if not bucket or not key:
+            raise FileNotFoundError(storage_path)
+        client = boto3.client("s3", region_name=self.settings.aws_region)
+        try:
+            obj = client.get_object(Bucket=bucket, Key=key)
+        except ClientError as exc:
+            raise FileNotFoundError(storage_path) from exc
+        return obj["Body"].read()
+
     def delete(self, storage_path: str | None) -> None:
         if not storage_path:
             return

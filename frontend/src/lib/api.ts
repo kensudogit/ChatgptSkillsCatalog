@@ -1,4 +1,4 @@
-export type Skill = {
+export type SkillSummary = {
   id: number;
   name: string;
   description: string;
@@ -7,17 +7,21 @@ export type Skill = {
   category: string | null;
   source_type: "upload" | "git" | string;
   original_filename: string | null;
-  skill_md_content: string | null;
   git_source_id: number | null;
   git_path: string | null;
   git_commit: string | null;
   created_at: string;
   updated_at: string;
   tags: string[];
+  downloadable: boolean;
+};
+
+export type Skill = SkillSummary & {
+  skill_md_content: string | null;
 };
 
 export type SkillListResponse = {
-  items: Skill[];
+  items: SkillSummary[];
   total: number;
   page: number;
   page_size: number;
@@ -38,6 +42,11 @@ export type GitSource = {
   skill_count: number;
 };
 
+export type SyncSkipItem = {
+  path: string;
+  reason: string;
+};
+
 export type SyncResult = {
   git_source_id: number;
   status: string;
@@ -45,6 +54,7 @@ export type SyncResult = {
   imported: number;
   updated: number;
   skipped: number;
+  skipped_details?: SyncSkipItem[];
 };
 
 const API_BASE =
@@ -84,6 +94,7 @@ export type SkillQuery = {
   category?: string;
   source_type?: string;
   tag?: string;
+  sort?: string;
   page?: number;
   page_size?: number;
 };
@@ -133,6 +144,34 @@ export const api = {
 
   deleteSkill(id: number) {
     return request<void>(`/skills/${id}`, { method: "DELETE" });
+  },
+
+  async downloadSkill(id: number, fallbackName = "skill.zip") {
+    const res = await fetch(`${API_BASE}/skills/${id}/download`, {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = body.detail || detail;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = /filename="?([^"]+)"?/i.exec(disposition);
+    const filename = match?.[1] || fallbackName;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   },
 
   listGitSources() {

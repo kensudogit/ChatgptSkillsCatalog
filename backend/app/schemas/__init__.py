@@ -31,7 +31,13 @@ class SkillUpdate(BaseModel):
     tags: list[str] | None = None
 
 
-class SkillOut(BaseModel):
+def _skill_downloadable(skill) -> bool:
+    return bool(skill.storage_path) or bool(skill.skill_md_content)
+
+
+class SkillSummary(BaseModel):
+    """List payload without full SKILL.md body for faster catalog loads."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -42,16 +48,16 @@ class SkillOut(BaseModel):
     category: str | None
     source_type: str
     original_filename: str | None
-    skill_md_content: str | None
     git_source_id: int | None
     git_path: str | None
     git_commit: str | None
     created_at: datetime
     updated_at: datetime
     tags: list[str] = Field(default_factory=list)
+    downloadable: bool = False
 
     @classmethod
-    def from_orm_skill(cls, skill) -> "SkillOut":
+    def from_orm_skill(cls, skill) -> "SkillSummary":
         return cls(
             id=skill.id,
             name=skill.name,
@@ -61,18 +67,30 @@ class SkillOut(BaseModel):
             category=skill.category,
             source_type=skill.source_type,
             original_filename=skill.original_filename,
-            skill_md_content=skill.skill_md_content,
             git_source_id=skill.git_source_id,
             git_path=skill.git_path,
             git_commit=skill.git_commit,
             created_at=skill.created_at,
             updated_at=skill.updated_at,
             tags=[t.tag for t in skill.tags],
+            downloadable=_skill_downloadable(skill),
+        )
+
+
+class SkillOut(SkillSummary):
+    skill_md_content: str | None = None
+
+    @classmethod
+    def from_orm_skill(cls, skill) -> "SkillOut":
+        summary = SkillSummary.from_orm_skill(skill)
+        return cls(
+            **summary.model_dump(),
+            skill_md_content=skill.skill_md_content,
         )
 
 
 class SkillListResponse(BaseModel):
-    items: list[SkillOut]
+    items: list[SkillSummary]
     total: int
     page: int
     page_size: int
@@ -127,6 +145,11 @@ class GitSourceOut(BaseModel):
         )
 
 
+class SyncSkipItem(BaseModel):
+    path: str
+    reason: str
+
+
 class SyncResult(BaseModel):
     git_source_id: int
     status: str
@@ -134,6 +157,7 @@ class SyncResult(BaseModel):
     imported: int = 0
     updated: int = 0
     skipped: int = 0
+    skipped_details: list[SyncSkipItem] = Field(default_factory=list)
 
 
 class HealthResponse(BaseModel):

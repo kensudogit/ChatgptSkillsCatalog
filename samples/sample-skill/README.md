@@ -1,4 +1,7 @@
-# Sample Skill
+# sample-pcb-checklist
 
-Demo ChatGPT / Cursor Skill package.
-Zip this directory and upload it from the catalog Upload page.
+ZIP 化してカタログへアップロードするためのサンプル Skill です。
+
+`ash
+python scripts/make_sample_zip.py
+`

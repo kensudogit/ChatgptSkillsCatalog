@@ -47,6 +47,7 @@ class GitSyncService:
     def sync(self, db: Session, source: GitSource) -> dict:
         workdir = Path(self.settings.git_workdir) / f"source_{source.id}"
         imported = updated = skipped = 0
+        skipped_details: list[dict] = []
         try:
             repo = self._clone_or_pull(source, workdir)
             commit = repo.head.commit.hexsha
@@ -67,8 +68,12 @@ class GitSyncService:
                 seen_paths.add(rel)
                 try:
                     parsed = parse_skill_directory(skill_dir)
-                except SkillParseError:
+                except SkillParseError as exc:
                     skipped += 1
+                    if len(skipped_details) < 20:
+                        skipped_details.append(
+                            {"path": rel, "reason": str(exc)[:200]}
+                        )
                     continue
 
                 existing = db.scalar(
@@ -130,6 +135,7 @@ class GitSyncService:
                 "imported": imported,
                 "updated": updated,
                 "skipped": skipped,
+                "skipped_details": skipped_details,
             }
         except Exception as exc:
             db.rollback()
@@ -145,19 +151,22 @@ class GitSyncService:
                 "imported": 0,
                 "updated": 0,
                 "skipped": 0,
+                "skipped_details": [],
             }
 
     def _clone_or_pull(self, source: GitSource, workdir: Path) -> Repo:
         url = _authenticated_url(source.repository_url, source.access_token)
+        timeout = max(30, int(self.settings.git_clone_timeout_sec))
         if workdir.exists() and (workdir / ".git").exists():
             repo = Repo(str(workdir))
             # Update remote URL in case token changed
             repo.remotes.origin.set_url(url)
             try:
-                repo.git.fetch("--all")
-                repo.git.checkout(source.branch)
-                repo.git.pull("origin", source.branch)
-            except GitCommandError as e:
+                with repo.git.custom_environment(GIT_HTTP_LOW_SPEED_TIME=str(timeout)):
+                    repo.git.fetch("--all")
+                    repo.git.checkout(source.branch)
+                    repo.git.pull("origin", source.branch)
+            except GitCommandError:
                 # Re-clone on hard failure
                 shutil.rmtree(workdir, ignore_errors=True)
                 return Repo.clone_from(

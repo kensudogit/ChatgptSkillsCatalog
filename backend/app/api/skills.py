@@ -1,4 +1,8 @@
+import io
+import re
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -6,11 +10,20 @@ from app import messages as msg
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.skill import Skill, SkillTag
-from app.schemas import SkillListResponse, SkillOut, SkillUpdate
-from app.services.skill_parser import SkillParseError, parse_skill_zip
+from app.schemas import SkillListResponse, SkillOut, SkillSummary, SkillUpdate
+from app.services.skill_parser import SkillParseError, parse_skill_zip, slugify
 from app.services.storage import StorageService
 
 router = APIRouter(prefix="/skills", tags=["skills"])
+
+SORT_OPTIONS = {
+    "updated_desc": Skill.updated_at.desc(),
+    "updated_asc": Skill.updated_at.asc(),
+    "name_asc": Skill.name.asc(),
+    "name_desc": Skill.name.desc(),
+    "created_desc": Skill.created_at.desc(),
+    "created_asc": Skill.created_at.asc(),
+}
 
 
 def _apply_tags(skill: Skill, tags: list[str]) -> None:
@@ -20,12 +33,22 @@ def _apply_tags(skill: Skill, tags: list[str]) -> None:
             skill.tags.append(SkillTag(tag=tag.strip()[:100]))
 
 
+def _safe_filename(name: str, fallback: str = "skill.zip") -> str:
+    cleaned = re.sub(r'[\\/:*?"<>|]+', "-", name).strip().strip(".")
+    if not cleaned:
+        return fallback
+    if not cleaned.lower().endswith(".zip"):
+        cleaned = f"{cleaned}.zip"
+    return cleaned[:180]
+
+
 @router.get("", response_model=SkillListResponse)
 def list_skills(
     q: str | None = Query(None, description=msg.QUERY_SEARCH),
     category: str | None = None,
     source_type: str | None = None,
     tag: str | None = None,
+    sort: str = Query("updated_desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -57,15 +80,16 @@ def list_skills(
         stmt = stmt.where(f)
         count_stmt = count_stmt.where(f)
 
+    order = SORT_OPTIONS.get(sort, Skill.updated_at.desc())
     total = db.scalar(count_stmt) or 0
     skills = db.scalars(
-        stmt.order_by(Skill.updated_at.desc())
+        stmt.order_by(order)
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()
 
     return SkillListResponse(
-        items=[SkillOut.from_orm_skill(s) for s in skills],
+        items=[SkillSummary.from_orm_skill(s) for s in skills],
         total=total,
         page=page,
         page_size=page_size,
@@ -97,6 +121,48 @@ def get_skill(skill_id: int, db: Session = Depends(get_db)):
     if not skill:
         raise HTTPException(status_code=404, detail=msg.SKILL_NOT_FOUND)
     return SkillOut.from_orm_skill(skill)
+
+
+@router.get("/{skill_id}/download")
+def download_skill(
+    skill_id: int,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    skill = db.get(Skill, skill_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail=msg.SKILL_NOT_FOUND)
+
+    storage = StorageService(settings)
+    filename = skill.original_filename or _safe_filename(skill.name)
+
+    if skill.storage_path:
+        try:
+            data = storage.read_bytes(skill.storage_path)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=404, detail=msg.DOWNLOAD_NOT_AVAILABLE
+            ) from exc
+    elif skill.skill_md_content:
+        import zipfile
+
+        folder = slugify(skill.name)
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(f"{folder}/SKILL.md", skill.skill_md_content)
+        data = buffer.getvalue()
+        filename = _safe_filename(skill.name)
+    else:
+        raise HTTPException(status_code=404, detail=msg.DOWNLOAD_NOT_AVAILABLE)
+
+    return StreamingResponse(
+        io.BytesIO(data),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(data)),
+        },
+    )
 
 
 @router.post("/upload", response_model=SkillOut, status_code=status.HTTP_201_CREATED)

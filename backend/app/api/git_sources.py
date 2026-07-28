@@ -21,13 +21,17 @@ router = APIRouter(prefix="/git-sources", tags=["git-sources"])
 @router.get("", response_model=list[GitSourceOut])
 def list_git_sources(db: Session = Depends(get_db)):
     sources = db.scalars(select(GitSource).order_by(GitSource.created_at.desc())).all()
-    result = []
-    for source in sources:
-        count = db.scalar(
-            select(func.count(Skill.id)).where(Skill.git_source_id == source.id)
-        ) or 0
-        result.append(GitSourceOut.from_orm_source(source, skill_count=count))
-    return result
+    counts = dict(
+        db.execute(
+            select(Skill.git_source_id, func.count(Skill.id))
+            .where(Skill.git_source_id.is_not(None))
+            .group_by(Skill.git_source_id)
+        ).all()
+    )
+    return [
+        GitSourceOut.from_orm_source(source, skill_count=counts.get(source.id, 0))
+        for source in sources
+    ]
 
 
 @router.post("", response_model=GitSourceOut, status_code=status.HTTP_201_CREATED)
@@ -110,8 +114,4 @@ def sync_git_source(
         raise HTTPException(status_code=404, detail=msg.GIT_SOURCE_NOT_FOUND)
 
     result = GitSyncService(settings).sync(db, source)
-    if result["status"] == "error":
-        # Still return 200 with error payload so UI can show message;
-        # client can treat status field.
-        pass
     return SyncResult(**result)

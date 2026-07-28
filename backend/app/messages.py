@@ -10,6 +10,9 @@ SKILL_MD_NOT_FOUND_IN_ZIP = "ZIP 内に SKILL.md が見つかりません"
 INVALID_ZIP = "ZIP ファイルとして読み込めません"
 QUERY_SEARCH = "名前・説明・作者・タグの横断検索"
 QUERY_TAGS = "タグ（カンマ区切り）"
+DOWNLOAD_NOT_AVAILABLE = (
+    "ダウンロードできるファイルがありません"
+)
 
 
 def file_too_large(limit_mb: int) -> str:

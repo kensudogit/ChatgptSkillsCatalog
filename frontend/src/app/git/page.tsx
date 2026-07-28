@@ -14,6 +14,9 @@ export default function GitPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [skippedDetails, setSkippedDetails] = useState<
+    { path: string; reason: string }[]
+  >([]);
   const [syncingId, setSyncingId] = useState<number | null>(null);
 
   const [name, setName] = useState("");
@@ -70,12 +73,14 @@ export default function GitPage() {
     setSyncingId(id);
     setError(null);
     setSuccess(null);
+    setSkippedDetails([]);
     try {
       const result: SyncResult = await api.syncGitSource(id);
       if (result.status === "success") {
         setSuccess(
           syncSummary(result.imported, result.updated, result.skipped)
         );
+        setSkippedDetails(result.skipped_details || []);
       } else {
         setError(result.message || messages.git.syncFailed);
       }
@@ -108,6 +113,21 @@ export default function GitPage() {
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
+      {skippedDetails.length > 0 && (
+        <div className="panel" style={{ marginBottom: "1.25rem" }}>
+          <h2 style={{ marginTop: 0, fontSize: "0.95rem" }}>
+            {messages.gitExtras.skippedTitle}
+          </h2>
+          <ul className="skip-list">
+            {skippedDetails.map((item) => (
+              <li key={`${item.path}-${item.reason}`}>
+                <code>{item.path}</code>
+                <span>{item.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <form className="panel form-grid" onSubmit={onCreate} style={{ marginBottom: "1.5rem" }}>
         <h2 style={{ margin: 0, fontSize: "1.05rem" }}>{messages.git.formTitle}</h2>
