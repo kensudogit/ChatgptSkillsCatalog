@@ -21,7 +21,7 @@ def _apply_tags(skill: Skill, tags: list[str]) -> None:
 
 @router.get("", response_model=SkillListResponse)
 def list_skills(
-    q: str | None = Query(None, description="??????????????"),
+    q: str | None = Query(None, description="Full-text search over name, description and tags"),
     category: str | None = None,
     source_type: str | None = None,
     tag: str | None = None,
@@ -106,7 +106,7 @@ async def upload_skill(
     category: str | None = Form(None),
     author: str | None = Form(None),
     version: str | None = Form(None),
-    tags: str | None = Form(None, description="????????"),
+    tags: str | None = Form(None, description="Comma-separated tags"),
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):

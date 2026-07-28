@@ -480,7 +480,7 @@ textarea {
   color: var(--text-dim);
 }
 
-/* Usage guide modal — light violet palette */
+/* Usage guide modal - light violet palette */
 .guide-trigger {
   display: inline-flex;
   align-items: center;
