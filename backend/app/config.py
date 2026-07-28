@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +26,16 @@ class Settings(BaseSettings):
 
     git_clone_timeout_sec: int = 120
     git_workdir: str = "/app/git_repos"
+
+    @field_validator("database_url")
+    @classmethod
+    def _require_sqlalchemy_driver(cls, value: str) -> str:
+        # Managed platforms (Railway, Heroku) inject driver-less URLs such as
+        # postgres://... which SQLAlchemy cannot resolve to a DBAPI on its own.
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return f"postgresql+psycopg2://{value[len(prefix):]}"
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

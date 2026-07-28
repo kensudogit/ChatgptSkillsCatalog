@@ -1,0 +1,25 @@
+.git
+.gitignore
+README.md
+docker-compose.yml
+docker-compose.prod.yml
+infrastructure
+scripts
+samples/*.zip
+
+**/node_modules
+**/.next
+**/out
+
+**/__pycache__
+**/*.py[cod]
+**/.venv
+**/venv
+
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/git_repos
+
+# Local overrides must not leak into the image build
+**/.env
+**/.env.local

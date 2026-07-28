@@ -13,11 +13,14 @@ Internal web application for centrally managing, searching, and sharing ChatGPT 
 
 ```
 ChatgptSkillsCatalog/
-??? frontend/            # Next.js UI
-??? backend/             # FastAPI API
-??? infrastructure/ecs/  # ECS task definition & deploy notes
-??? docker-compose.yml
-??? samples/             # Sample Skill package
+|- frontend/            # Next.js UI
+|- backend/             # FastAPI API
+|- infrastructure/ecs/  # ECS task definition & deploy notes
+|- Dockerfile           # Combined image for Railway (single URL)
+|- railway.toml         # Railway build & health-check settings
+|- start.sh             # Runs uvicorn + Next.js in one container
+|- docker-compose.yml
+\- samples/             # Sample Skill package
 ```
 
 ## Features
@@ -99,8 +102,8 @@ npm run dev
 
 ```
 my-skill/
-??? SKILL.md      # required (YAML frontmatter recommended)
-??? ...           # optional supporting files
+|- SKILL.md      # required (YAML frontmatter recommended)
+\- ...           # optional supporting files
 ```
 
 Example `SKILL.md`:
@@ -126,6 +129,33 @@ Prebuilt ZIP: `samples/sample-pcb-checklist.zip`
 ```bash
 python scripts/make_sample_zip.py
 ```
+
+## Railway deployment
+
+Railway builds the repository root, so the root `Dockerfile` packages the Next.js
+frontend and the FastAPI backend into a single container served on one URL.
+Next.js listens on `$PORT` and proxies `/api/*`, `/health`, `/docs` and
+`/openapi.json` to the internal uvicorn process on `127.0.0.1:8000`.
+
+1. Add a PostgreSQL database to the Railway project
+2. Set the service variables:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (reference variable) |
+| `STORAGE_BACKEND` | `local`, or `s3` with `S3_BUCKET` + AWS credentials |
+
+3. Deploy. `railway.toml` selects the Dockerfile builder and health-checks `/health`.
+
+Notes:
+
+- The container filesystem is ephemeral. Attach a Railway volume for
+  `/app/uploads` and `/app/git_repos`, or use `STORAGE_BACKEND=s3`, to keep
+  uploaded ZIPs across deploys.
+- `NEXT_PUBLIC_API_BASE_URL` is fixed to `/api/v1` at image build time, so no
+  public API URL is required.
+- Driver-less URLs (`postgres://`, `postgresql://`) are normalized to
+  `postgresql+psycopg2://` by the backend settings.
 
 ## AWS ECS deployment
 
