@@ -1,0 +1,24 @@
+version: "3.8"
+
+# Production-oriented compose (used as reference for ECS / CI image build)
+services:
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/skills-catalog-backend:${IMAGE_TAG:-latest}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      STORAGE_BACKEND: s3
+      S3_BUCKET: ${S3_BUCKET}
+      S3_PREFIX: skills
+      AWS_REGION: ${AWS_REGION:-ap-northeast-1}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      UPLOAD_DIR: /app/uploads
+      GIT_WORKDIR: /app/git_repos
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/skills-catalog-frontend:${IMAGE_TAG:-latest}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    ports:
+      - "3000:3000"

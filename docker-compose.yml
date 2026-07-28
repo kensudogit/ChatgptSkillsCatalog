@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: skills
+      POSTGRES_PASSWORD: skills
+      POSTGRES_DB: skills_catalog
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skills -d skills_catalog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://skills:skills@db:5432/skills_catalog
+      UPLOAD_DIR: /app/uploads
+      GIT_WORKDIR: /app/git_repos
+      STORAGE_BACKEND: local
+      CORS_ORIGINS: http://localhost:3000,http://frontend:3000
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - uploads_data:/app/uploads
+      - git_repos_data:/app/git_repos
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads_data:
+  git_repos_data:

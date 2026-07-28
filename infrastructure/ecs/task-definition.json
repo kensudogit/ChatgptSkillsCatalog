@@ -1,0 +1,84 @@
+# ECS Task Definition (Fargate) — substitute placeholders before register-task-definition
+{
+  "family": "skills-catalog",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/skillsCatalogTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "ACCOUNT_ID.dkr.ecr.ap-northeast-1.amazonaws.com/skills-catalog-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "STORAGE_BACKEND", "value": "s3" },
+        { "name": "S3_BUCKET", "value": "skills-catalog-uploads" },
+        { "name": "S3_PREFIX", "value": "skills" },
+        { "name": "AWS_REGION", "value": "ap-northeast-1" },
+        { "name": "CORS_ORIGINS", "value": "https://skills.example.com" },
+        { "name": "UPLOAD_DIR", "value": "/app/uploads" },
+        { "name": "GIT_WORKDIR", "value": "/app/git_repos" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:ACCOUNT_ID:secret:skills-catalog/database-url"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/skills-catalog",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "backend"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 20
+      }
+    },
+    {
+      "name": "frontend",
+      "image": "ACCOUNT_ID.dkr.ecr.ap-northeast-1.amazonaws.com/skills-catalog-frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NEXT_PUBLIC_API_BASE_URL",
+          "value": "https://api.skills.example.com/api/v1"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "backend",
+          "condition": "HEALTHY"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/skills-catalog",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "frontend"
+        }
+      }
+    }
+  ]
+}
