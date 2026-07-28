@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
 from app.config import get_settings
-from app.database import Base, engine
+from app.database import init_models
 from app.schemas import HealthResponse
 from app.services.storage import StorageService
 
@@ -15,7 +16,7 @@ from app.services.storage import StorageService
 async def lifespan(_: FastAPI):
     settings = get_settings()
     # Create tables (for MVP; use Alembic migrations in production hardening)
-    Base.metadata.create_all(bind=engine)
+    init_models()
     StorageService(settings).ensure_dirs()
     Path(settings.git_workdir).mkdir(parents=True, exist_ok=True)
     yield
@@ -23,6 +24,12 @@ async def lifespan(_: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    # uvicorn only configures its own loggers, so attach a root handler to keep
+    # application logs in the container output.
+    logging.basicConfig(
+        level=logging.DEBUG if settings.debug else logging.INFO,
+        format="%(levelname)s:     %(name)s - %(message)s",
+    )
     app = FastAPI(
         title=settings.app_name,
         version="1.0.0",
