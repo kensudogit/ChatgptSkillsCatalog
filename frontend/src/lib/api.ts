@@ -1,3 +1,16 @@
+export type CompatIssue = {
+  code: string;
+  severity: "error" | "warn" | "info" | string;
+  message: string;
+};
+
+export type ClaudeCompat = {
+  compatible: boolean;
+  status: "ok" | "warn" | "error" | string;
+  summary: string;
+  issues: CompatIssue[];
+};
+
 export type SkillSummary = {
   id: number;
   name: string;
@@ -14,6 +27,8 @@ export type SkillSummary = {
   updated_at: string;
   tags: string[];
   downloadable: boolean;
+  package_dir: string | null;
+  claude_compat: ClaudeCompat;
 };
 
 export type Skill = SkillSummary & {
@@ -95,6 +110,7 @@ export type SkillQuery = {
   source_type?: string;
   tag?: string;
   sort?: string;
+  claude_compat?: string;
   page?: number;
   page_size?: number;
 };

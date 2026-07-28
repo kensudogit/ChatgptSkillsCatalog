@@ -26,6 +26,8 @@ class Skill(Base):
     storage_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     skill_md_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Parent folder name inside the ZIP / git package (should match frontmatter name for Claude)
+    package_dir: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     git_source_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("git_sources.id", ondelete="SET NULL"), nullable=True

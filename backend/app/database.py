@@ -42,12 +42,13 @@ def describe_target() -> str:
 
 
 def ensure_indexes() -> None:
-    """Create helpful indexes on existing databases (create_all won't alter)."""
+    """Create helpful indexes/columns on existing databases (create_all won't alter)."""
     statements = [
         "CREATE INDEX IF NOT EXISTS ix_skills_updated_at ON skills (updated_at)",
         "CREATE INDEX IF NOT EXISTS ix_skills_source_type ON skills (source_type)",
         "CREATE INDEX IF NOT EXISTS ix_skills_git_source_path ON skills (git_source_id, git_path)",
         "CREATE INDEX IF NOT EXISTS ix_skill_tags_tag ON skill_tags (tag)",
+        "ALTER TABLE skills ADD COLUMN IF NOT EXISTS package_dir VARCHAR(200)",
     ]
     with engine.begin() as conn:
         for stmt in statements:

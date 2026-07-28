@@ -6,6 +6,7 @@ from pathlib import Path
 import frontmatter
 
 from app import messages as msg
+from app.services.claude_compat import assess_from_parsed
 
 
 class SkillParseError(Exception):
@@ -26,25 +27,31 @@ def _find_skill_md(names: list[str]) -> str | None:
 
 def parse_skill_markdown(content: str) -> dict:
     """Parse SKILL.md with optional YAML frontmatter."""
+    has_frontmatter = content.lstrip().startswith("---")
     try:
         post = frontmatter.loads(content)
     except Exception:
-        # Fallback: treat entire file as body
         return {
             "name": None,
+            "frontmatter_name": None,
             "description": content[:500],
             "version": None,
             "author": None,
             "category": None,
             "tags": [],
             "body": content,
+            "has_frontmatter": False,
         }
 
     meta = dict(post.metadata or {})
-    name = meta.get("name") or meta.get("title")
+    frontmatter_name = meta.get("name")
+    if frontmatter_name is not None and not isinstance(frontmatter_name, str):
+        frontmatter_name = str(frontmatter_name)
+
+    # Catalog may still use title as a display fallback, but Claude requires `name`.
+    name = frontmatter_name or meta.get("title")
     description = meta.get("description") or ""
     if not description and post.content:
-        # First non-empty paragraph as description
         for line in post.content.strip().splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
@@ -55,19 +62,27 @@ def parse_skill_markdown(content: str) -> dict:
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",") if t.strip()]
 
+    # Nested metadata map is the Agent Skills-preferred place for extras.
+    nested = meta.get("metadata") if isinstance(meta.get("metadata"), dict) else {}
+    version = meta.get("version") or nested.get("version")
+    author = meta.get("author") or meta.get("owner") or nested.get("author")
+    category = meta.get("category") or nested.get("category")
+
     return {
         "name": name,
+        "frontmatter_name": frontmatter_name,
         "description": description if isinstance(description, str) else str(description),
-        "version": meta.get("version"),
-        "author": meta.get("author") or meta.get("owner"),
-        "category": meta.get("category"),
+        "version": version,
+        "author": author,
+        "category": category,
         "tags": list(tags) if isinstance(tags, list) else [],
         "body": post.content or content,
+        "has_frontmatter": has_frontmatter and bool(meta),
     }
 
 
 def parse_skill_zip(data: bytes) -> dict:
-    """Extract and parse a ChatGPT/Cursor skill ZIP package."""
+    """Extract and parse a ChatGPT/Cursor/Claude skill ZIP package."""
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
             names = [n for n in zf.namelist() if not n.endswith("/")]
@@ -78,16 +93,21 @@ def parse_skill_zip(data: bytes) -> dict:
             raw = zf.read(skill_md_name).decode("utf-8", errors="replace")
             parsed = parse_skill_markdown(raw)
 
-            # Infer name from folder if missing
+            parts = skill_md_name.replace("\\", "/").split("/")
+            package_dir = parts[-2] if len(parts) >= 2 else None
+
+            # Infer catalog name from folder if frontmatter name missing
             if not parsed.get("name"):
-                parts = skill_md_name.replace("\\", "/").split("/")
-                if len(parts) >= 2:
-                    parsed["name"] = parts[-2]
-                else:
-                    parsed["name"] = "untitled-skill"
+                parsed["name"] = package_dir or "untitled-skill"
 
             parsed["skill_md_content"] = raw
             parsed["file_list"] = names
+            parsed["package_dir"] = package_dir
+            parsed["claude_compat"] = assess_from_parsed(
+                parsed,
+                skill_md_path=skill_md_name,
+                folder_name=package_dir,
+            )
             return parsed
     except zipfile.BadZipFile as e:
         raise SkillParseError(msg.INVALID_ZIP) from e
@@ -106,6 +126,11 @@ def parse_skill_directory(skill_dir: Path) -> dict:
     if not parsed.get("name"):
         parsed["name"] = skill_dir.name
     parsed["skill_md_content"] = raw
+    parsed["package_dir"] = skill_dir.name
+    parsed["claude_compat"] = assess_from_parsed(
+        parsed,
+        folder_name=skill_dir.name,
+    )
     return parsed
 
 

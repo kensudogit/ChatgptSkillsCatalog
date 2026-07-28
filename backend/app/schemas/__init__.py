@@ -35,6 +35,30 @@ def _skill_downloadable(skill) -> bool:
     return bool(skill.storage_path) or bool(skill.skill_md_content)
 
 
+class CompatIssueOut(BaseModel):
+    code: str
+    severity: str
+    message: str
+
+
+class ClaudeCompatOut(BaseModel):
+    compatible: bool
+    status: str
+    summary: str
+    issues: list[CompatIssueOut] = Field(default_factory=list)
+
+
+def _claude_compat_for(skill) -> ClaudeCompatOut:
+    from app.services.claude_compat import assess_skill_record
+
+    data = assess_skill_record(
+        skill_md_content=skill.skill_md_content,
+        package_dir=getattr(skill, "package_dir", None),
+        git_path=skill.git_path,
+    )
+    return ClaudeCompatOut(**data)
+
+
 class SkillSummary(BaseModel):
     """List payload without full SKILL.md body for faster catalog loads."""
 
@@ -55,6 +79,8 @@ class SkillSummary(BaseModel):
     updated_at: datetime
     tags: list[str] = Field(default_factory=list)
     downloadable: bool = False
+    package_dir: str | None = None
+    claude_compat: ClaudeCompatOut
 
     @classmethod
     def from_orm_skill(cls, skill) -> "SkillSummary":
@@ -74,6 +100,8 @@ class SkillSummary(BaseModel):
             updated_at=skill.updated_at,
             tags=[t.tag for t in skill.tags],
             downloadable=_skill_downloadable(skill),
+            package_dir=getattr(skill, "package_dir", None),
+            claude_compat=_claude_compat_for(skill),
         )
 
 

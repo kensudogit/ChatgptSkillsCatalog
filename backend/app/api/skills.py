@@ -49,6 +49,9 @@ def list_skills(
     source_type: str | None = None,
     tag: str | None = None,
     sort: str = Query("updated_desc"),
+    claude_compat: str | None = Query(
+        None, description="Filter by Claude compatibility: ok, warn, error"
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -81,6 +84,26 @@ def list_skills(
         count_stmt = count_stmt.where(f)
 
     order = SORT_OPTIONS.get(sort, Skill.updated_at.desc())
+
+    # Compatibility is derived from SKILL.md content, so filter after fetch when requested.
+    if claude_compat in {"ok", "warn", "error"}:
+        from app.schemas import SkillSummary
+
+        all_skills = db.scalars(stmt.order_by(order)).all()
+        matched = [
+            s
+            for s in all_skills
+            if SkillSummary.from_orm_skill(s).claude_compat.status == claude_compat
+        ]
+        total = len(matched)
+        page_items = matched[(page - 1) * page_size : page * page_size]
+        return SkillListResponse(
+            items=[SkillSummary.from_orm_skill(s) for s in page_items],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
     total = db.scalar(count_stmt) or 0
     skills = db.scalars(
         stmt.order_by(order)
@@ -146,12 +169,19 @@ def download_skill(
     elif skill.skill_md_content:
         import zipfile
 
-        folder = slugify(skill.name)
+        from app.services.skill_parser import parse_skill_markdown
+
+        parsed = parse_skill_markdown(skill.skill_md_content)
+        folder = (
+            skill.package_dir
+            or parsed.get("frontmatter_name")
+            or slugify(skill.name)
+        )
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr(f"{folder}/SKILL.md", skill.skill_md_content)
         data = buffer.getvalue()
-        filename = _safe_filename(skill.name)
+        filename = _safe_filename(str(folder))
     else:
         raise HTTPException(status_code=404, detail=msg.DOWNLOAD_NOT_AVAILABLE)
 
@@ -212,6 +242,7 @@ async def upload_skill(
         storage_path=storage_path,
         original_filename=file.filename,
         skill_md_content=parsed.get("skill_md_content"),
+        package_dir=parsed.get("package_dir"),
     )
     db.add(skill)
     db.flush()

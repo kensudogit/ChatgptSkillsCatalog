@@ -117,6 +117,19 @@ export const messages = {
   gitExtras: {
     skippedTitle: "スキップされたパス",
   },
+  claudeCompat: {
+    label: "Claude",
+    ok: "互換",
+    warn: "注意",
+    error: "非互換",
+    title: "Claude / Agent Skills 互換性",
+    lead: "Agent Skills 仕様（name / description / 親フォルダ名一致）に基づく判定です。ChatGPT・Cursor でも同じ SKILL.md を利用できます。",
+    noIssues: "指摘事項はありません。",
+    filterAll: "Claude 判定すべて",
+    filterOk: "互換のみ",
+    filterWarn: "注意あり",
+    filterError: "非互換のみ",
+  },
 } as const;
 
 export function sourceLabel(sourceType: string): string {

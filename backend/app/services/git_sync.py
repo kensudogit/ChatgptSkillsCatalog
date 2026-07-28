@@ -89,6 +89,7 @@ class GitSyncService:
                     existing.author = parsed.get("author")
                     existing.category = parsed.get("category")
                     existing.skill_md_content = parsed.get("skill_md_content")
+                    existing.package_dir = parsed.get("package_dir") or skill_dir.name
                     existing.git_commit = commit
                     existing.source_type = "git"
                     self._replace_tags(db, existing, parsed.get("tags") or [])
@@ -102,6 +103,7 @@ class GitSyncService:
                         category=parsed.get("category"),
                         source_type="git",
                         skill_md_content=parsed.get("skill_md_content"),
+                        package_dir=parsed.get("package_dir") or skill_dir.name,
                         git_source_id=source.id,
                         git_path=rel,
                         git_commit=commit,

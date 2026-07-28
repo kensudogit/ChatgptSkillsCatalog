@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { ClaudeCompatBadge } from "@/components/ClaudeCompatBadge";
 import { api, type SkillListResponse, type SkillSummary } from "@/lib/api";
 import { messages, pageRangeLabel, sourceLabel } from "@/lib/messages";
 
@@ -22,6 +23,7 @@ function HomePageInner() {
   const [sourceType, setSourceType] = useState("");
   const [tag, setTag] = useState(searchParams.get("tag") || "");
   const [sort, setSort] = useState("updated_desc");
+  const [claudeCompat, setClaudeCompat] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [page, setPage] = useState(1);
@@ -37,7 +39,7 @@ function HomePageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const hasFilters = Boolean(q || category || sourceType || tag);
+  const hasFilters = Boolean(q || category || sourceType || tag || claudeCompat);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +51,7 @@ function HomePageInner() {
         source_type: sourceType || undefined,
         tag: tag || undefined,
         sort,
+        claude_compat: claudeCompat || undefined,
         page,
         page_size: 12,
       });
@@ -58,7 +61,7 @@ function HomePageInner() {
     } finally {
       setLoading(false);
     }
-  }, [q, category, sourceType, tag, sort, page]);
+  }, [q, category, sourceType, tag, sort, claudeCompat, page]);
 
   useEffect(() => {
     api.listCategories().then((r) => setCategories(r.categories)).catch(() => {});
@@ -92,6 +95,7 @@ function HomePageInner() {
     setSourceType("");
     setTag("");
     setSort("updated_desc");
+    setClaudeCompat("");
     setPage(1);
   }
 
@@ -176,6 +180,19 @@ function HomePageInner() {
           <option value="updated_desc">{messages.catalog.sortUpdated}</option>
           <option value="name_asc">{messages.catalog.sortName}</option>
           <option value="created_desc">{messages.catalog.sortCreated}</option>
+        </select>
+        <select
+          className="select"
+          value={claudeCompat}
+          onChange={(e) => {
+            setPage(1);
+            setClaudeCompat(e.target.value);
+          }}
+        >
+          <option value="">{messages.claudeCompat.filterAll}</option>
+          <option value="ok">{messages.claudeCompat.filterOk}</option>
+          <option value="warn">{messages.claudeCompat.filterWarn}</option>
+          <option value="error">{messages.claudeCompat.filterError}</option>
         </select>
       </div>
 
@@ -267,6 +284,7 @@ function SkillCard({
         >
           {sourceLabel(skill.source_type)}
         </span>
+        <ClaudeCompatBadge compat={skill.claude_compat} compact />
         {skill.category && <span className="badge">{skill.category}</span>}
         {skill.version && <span className="badge">v{skill.version}</span>}
       </div>

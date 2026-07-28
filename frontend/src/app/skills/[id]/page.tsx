@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { ClaudeCompatPanel } from "@/components/ClaudeCompatBadge";
 import { api, type Skill } from "@/lib/api";
 import { confirmDeleteMessage, messages, sourceLabel } from "@/lib/messages";
 
@@ -155,6 +156,12 @@ export default function SkillDetailPage() {
 
       {error && <div className="alert alert-error">{error}</div>}
       {notice && <div className="alert alert-success">{notice}</div>}
+
+      {skill.claude_compat && (
+        <div style={{ marginBottom: "1.25rem" }}>
+          <ClaudeCompatPanel compat={skill.claude_compat} />
+        </div>
+      )}
 
       {editing && (
         <form className="panel form-grid" onSubmit={onSave} style={{ marginBottom: "1.25rem" }}>
