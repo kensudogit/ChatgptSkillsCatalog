@@ -87,8 +87,6 @@ def list_skills(
 
     # Compatibility is derived from SKILL.md content, so filter after fetch when requested.
     if claude_compat in {"ok", "warn", "error"}:
-        from app.schemas import SkillSummary
-
         all_skills = db.scalars(stmt.order_by(order)).all()
         matched = [
             s

@@ -29,6 +29,7 @@ class SkillUpdate(BaseModel):
     author: str | None = None
     category: str | None = None
     tags: list[str] | None = None
+    skill_md_content: str | None = None
 
 
 def _skill_downloadable(skill) -> bool:

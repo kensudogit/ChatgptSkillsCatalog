@@ -31,6 +31,7 @@ COPY backend/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
+COPY samples /app/samples
 COPY --from=frontend-builder /app/frontend/.next/standalone /app/frontend
 
 COPY start.sh /app/start.sh

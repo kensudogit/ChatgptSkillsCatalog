@@ -1,7 +1,7 @@
 # sample-pcb-checklist
 
-ZIP 化してカタログへアップロードするためのサンプル Skill です。
+Claude 互換のサンプル Skill です。ZIP 生成:
 
-`ash
-python scripts/make_sample_zip.py
-`
+```bash
+python scripts/build_sample_skills.py
+```

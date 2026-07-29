@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
 from app.config import get_settings
-from app.database import init_models
+from app.database import SessionLocal, init_models
 from app.schemas import HealthResponse
+from app.services.sample_seed import seed_sample_skills
 from app.services.storage import StorageService
 
 
@@ -19,6 +20,13 @@ async def lifespan(_: FastAPI):
     init_models()
     StorageService(settings).ensure_dirs()
     Path(settings.git_workdir).mkdir(parents=True, exist_ok=True)
+    db = SessionLocal()
+    try:
+        seed_sample_skills(db, settings)
+    except Exception:  # pragma: no cover - never block startup on seed
+        logging.getLogger(__name__).exception("Sample skill seed failed")
+    finally:
+        db.close()
     yield
 
 

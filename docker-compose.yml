@@ -30,6 +30,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./samples:/app/samples:ro
       - uploads_data:/app/uploads
       - git_repos_data:/app/git_repos
     depends_on:

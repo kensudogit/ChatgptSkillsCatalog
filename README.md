@@ -123,12 +123,16 @@ tags: [pcb, review]
 Guide reviewers through design checkpoints...
 ```
 
-Sample package: `samples/sample-skill/`
-Prebuilt ZIP: `samples/sample-pcb-checklist.zip`
+Sample packages: `samples/*/SKILL.md`
+Prebuilt ZIPs: `samples/zips/*.zip` (and `samples/sample-pcb-checklist.zip`)
 
 ```bash
-python scripts/make_sample_zip.py
+python scripts/build_sample_skills.py
+# optional: refresh Japanese metadata in a running catalog
+python scripts/update_sample_ja.py
 ```
+
+Empty catalogs auto-seed these samples on backend startup when `samples/zips` is available.
 
 ## Railway deployment
 
