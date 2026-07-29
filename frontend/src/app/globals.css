@@ -1255,23 +1255,53 @@ textarea {
   max-width: min(780px, 100%);
   padding: 1rem 1.1rem;
   border-radius: 16px;
-  border: 1px solid rgba(90, 103, 160, 0.14);
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
 .inquire-bubble.is-user {
   align-self: flex-end;
-  background: linear-gradient(160deg, #eef2ff, #f8fafc);
+  background: var(--accent-dim);
+  border-color: rgba(47, 158, 138, 0.35);
+  color: var(--text);
 }
 
 .inquire-bubble.is-assistant {
   align-self: flex-start;
+  background: var(--bg-elevated);
+}
+
+.inquire-role {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+
+.inquire-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+
+.inquire-detail {
+  margin: 0.6rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--danger);
+  word-break: break-all;
 }
 
 .inquire-refs {
   margin-top: 0.85rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(90, 103, 160, 0.12);
+  border-top: 1px solid var(--border);
 }
 
 .inquire-refs ul {
@@ -1288,14 +1318,19 @@ textarea {
   gap: 0.15rem;
 }
 
+.inquire-refs strong {
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
 .inquire-refs a {
   font-weight: 600;
-  color: #3730a3;
+  color: var(--accent-hover);
 }
 
 .inquire-refs span {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .inquire-form {

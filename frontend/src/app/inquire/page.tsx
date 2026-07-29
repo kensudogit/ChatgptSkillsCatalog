@@ -16,6 +16,7 @@ type ChatItem = {
   text: string;
   mode?: string;
   skills?: InquireResponse["skills"];
+  detail?: string | null;
 };
 
 export default function InquirePage() {
@@ -48,6 +49,7 @@ export default function InquirePage() {
           text: res.answer,
           mode: res.mode,
           skills: res.skills,
+          detail: res.error ?? null,
         },
       ]);
     } catch (e) {
@@ -105,15 +107,26 @@ export default function InquirePage() {
             key={`${item.role}-${idx}`}
             className={`inquire-bubble is-${item.role}`}
           >
-            <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.text}</p>
+            <span className="inquire-role">
+              {item.role === "user" ? t.you : t.assistant}
+            </span>
+            <p className="inquire-text">{item.text}</p>
             {item.role === "assistant" && item.mode && (
-              <span className="badge" style={{ marginTop: "0.75rem" }}>
+              <span
+                className={`badge ${item.mode === "openai" ? "badge-accent" : ""}`}
+                style={{ marginTop: "0.75rem" }}
+              >
                 {item.mode === "openai"
                   ? t.modeOpenai
                   : item.mode === "empty"
                     ? t.modeEmpty
                     : t.modeFallback}
               </span>
+            )}
+            {item.detail && (
+              <p className="inquire-detail">
+                {t.apiError}: {item.detail}
+              </p>
             )}
             {item.skills && item.skills.length > 0 && (
               <div className="inquire-refs">

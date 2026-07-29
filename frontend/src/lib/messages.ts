@@ -164,6 +164,9 @@ export const messages = {
     modeEmpty: "未入力",
     configured: "OpenAI 接続済み",
     notConfigured: "OPENAI_API_KEY 未設定（検索ベースで回答）",
+    apiError: "AI 呼び出しエラー",
+    you: "あなた",
+    assistant: "アシスタント",
     suggestions: [
       "カタログへの ZIP アップロード手順を教えて",
       "ESD 保護に関する Skill はある？",
