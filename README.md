@@ -96,6 +96,10 @@ npm run dev
 | DELETE | `/api/v1/skills/{id}` | Delete |
 | GET/POST | `/api/v1/git-sources` | List / register Git sources |
 | POST | `/api/v1/git-sources/{id}/sync` | Sync repository |
+| GET | `/api/v1/tests/status` | Latest pytest result |
+| POST | `/api/v1/tests/run` | Run pytest and return results |
+| GET | `/api/v1/inquire/status` | Whether OpenAI is configured |
+| POST | `/api/v1/inquire` | Answer catalog inquiries (`{ "question": "..." }`) |
 | GET | `/health` | Health check |
 
 ## Skill ZIP format
@@ -133,6 +137,17 @@ python scripts/update_sample_ja.py
 ```
 
 Empty catalogs auto-seed these samples on backend startup when `samples/zips` is available.
+
+## Tests
+
+```bash
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
+
+Open `/tests` in the Web UI to run the suite and browse results by Python test class
+(`POST /api/v1/tests/run`, `GET /api/v1/tests/status`).
 
 ## Railway deployment
 

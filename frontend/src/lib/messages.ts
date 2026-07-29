@@ -6,10 +6,12 @@ export const messages = {
     brandSub: "社内向け",
     footer: "ChatGPT Skills Catalog - 社内限定",
   },
-  nav: {
+    nav: {
     catalog: "カタログ",
     upload: "アップロード",
     git: "Git 連携",
+    inquire: "問い合わせ",
+    tests: "テスト",
   },
   common: {
     loading: "読み込み中...",
@@ -129,6 +131,44 @@ export const messages = {
     filterOk: "互換のみ",
     filterWarn: "注意あり",
     filterError: "非互換のみ",
+  },
+  tests: {
+    title: "バックエンドテスト",
+    lead:
+      "Python クラス向けの pytest を実行し、結果をクラス単位で確認できます。",
+    run: "テストを実行",
+    running: "実行中...",
+    refresh: "最新結果を再読込",
+    idle: "未実行",
+    summaryTotal: "合計",
+    summaryPassed: "成功",
+    summaryFailed: "失敗",
+    summarySkipped: "スキップ",
+    summaryError: "エラー",
+    byClass: "クラス別結果",
+    noResults: "まだ結果がありません。",
+    duration: "所要時間",
+    details: "詳細",
+  },
+  inquire: {
+    title: "問い合わせ",
+    lead:
+      "カタログの使い方や登録済み Skill について質問できます。OPENAI_API_KEY があれば AI が回答し、未設定時はカタログ検索ベースで案内します。",
+    placeholder: "例: PCB レビューに使える Skill は？ / ZIP の登録手順は？",
+    ask: "質問する",
+    asking: "回答を作成中...",
+    empty: "質問を入力してください。",
+    related: "関連 Skill",
+    modeOpenai: "OpenAI 回答",
+    modeFallback: "検索ベース回答",
+    modeEmpty: "未入力",
+    configured: "OpenAI 接続済み",
+    notConfigured: "OPENAI_API_KEY 未設定（検索ベースで回答）",
+    suggestions: [
+      "カタログへの ZIP アップロード手順を教えて",
+      "ESD 保護に関する Skill はある？",
+      "Claude 互換の確認方法は？",
+    ],
   },
 } as const;
 

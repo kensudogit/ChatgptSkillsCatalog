@@ -6,6 +6,7 @@ from pathlib import Path
 import frontmatter
 
 from app import messages as msg
+from app.config import Settings, get_settings
 from app.services.claude_compat import assess_from_parsed
 
 
@@ -65,6 +66,8 @@ def parse_skill_markdown(content: str) -> dict:
     # Nested metadata map is the Agent Skills-preferred place for extras.
     nested = meta.get("metadata") if isinstance(meta.get("metadata"), dict) else {}
     version = meta.get("version") or nested.get("version")
+    if version is not None and not isinstance(version, str):
+        version = str(version)
     author = meta.get("author") or meta.get("owner") or nested.get("author")
     category = meta.get("category") or nested.get("category")
 
@@ -81,50 +84,57 @@ def parse_skill_markdown(content: str) -> dict:
     }
 
 
-def parse_skill_zip(data: bytes) -> dict:
+def parse_skill_zip(data: bytes, settings: Settings | None = None) -> dict:
     """Extract and parse a ChatGPT/Cursor/Claude skill ZIP package."""
+    from app.services.zip_security import require_skill_metadata, validate_zip_bytes
+
+    settings = settings or get_settings()
+    zf = validate_zip_bytes(data, settings)
     try:
-        with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            names = [n for n in zf.namelist() if not n.endswith("/")]
-            skill_md_name = _find_skill_md(names)
-            if not skill_md_name:
-                raise SkillParseError(msg.SKILL_MD_NOT_FOUND_IN_ZIP)
+        names = [n for n in zf.namelist() if not n.endswith("/")]
+        skill_md_name = _find_skill_md(names)
+        if not skill_md_name:
+            raise SkillParseError(msg.SKILL_MD_NOT_FOUND_IN_ZIP)
 
-            raw = zf.read(skill_md_name).decode("utf-8", errors="replace")
-            parsed = parse_skill_markdown(raw)
+        raw = zf.read(skill_md_name).decode("utf-8", errors="strict")
+        parsed = parse_skill_markdown(raw)
+        require_skill_metadata(parsed)
 
-            parts = skill_md_name.replace("\\", "/").split("/")
-            package_dir = parts[-2] if len(parts) >= 2 else None
+        parts = skill_md_name.replace("\\", "/").split("/")
+        package_dir = parts[-2] if len(parts) >= 2 else None
 
-            # Infer catalog name from folder if frontmatter name missing
-            if not parsed.get("name"):
-                parsed["name"] = package_dir or "untitled-skill"
-
-            parsed["skill_md_content"] = raw
-            parsed["file_list"] = names
-            parsed["package_dir"] = package_dir
-            parsed["claude_compat"] = assess_from_parsed(
-                parsed,
-                skill_md_path=skill_md_name,
-                folder_name=package_dir,
-            )
-            return parsed
-    except zipfile.BadZipFile as e:
-        raise SkillParseError(msg.INVALID_ZIP) from e
+        parsed["name"] = parsed.get("frontmatter_name") or parsed.get("name")
+        parsed["skill_md_content"] = raw
+        parsed["file_list"] = names
+        parsed["package_dir"] = package_dir
+        parsed["claude_compat"] = assess_from_parsed(
+            parsed,
+            skill_md_path=skill_md_name,
+            folder_name=package_dir,
+        )
+        return parsed
+    except UnicodeDecodeError as exc:
+        raise SkillParseError(msg.INVALID_ZIP) from exc
+    except zipfile.BadZipFile as exc:
+        raise SkillParseError(msg.INVALID_ZIP) from exc
+    finally:
+        zf.close()
 
 
 def parse_skill_directory(skill_dir: Path) -> dict:
     """Parse a skill directory containing SKILL.md."""
+    from app.services.zip_security import require_skill_metadata
+
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         skill_md = skill_dir / "skill.md"
     if not skill_md.exists():
         raise SkillParseError(msg.skill_md_missing(skill_dir))
 
-    raw = skill_md.read_text(encoding="utf-8", errors="replace")
+    raw = skill_md.read_text(encoding="utf-8", errors="strict")
     parsed = parse_skill_markdown(raw)
-    if not parsed.get("name"):
-        parsed["name"] = skill_dir.name
+    require_skill_metadata(parsed)
+    parsed["name"] = parsed.get("frontmatter_name") or parsed.get("name") or skill_dir.name
     parsed["skill_md_content"] = raw
     parsed["package_dir"] = skill_dir.name
     parsed["claude_compat"] = assess_from_parsed(

@@ -72,6 +72,62 @@ export type SyncResult = {
   skipped_details?: SyncSkipItem[];
 };
 
+export type TestCaseResult = {
+  nodeid: string;
+  outcome: string;
+  duration_ms: number;
+  longrepr?: string | null;
+  keywords?: string[];
+};
+
+export type TestClassResult = {
+  class_name: string;
+  passed: number;
+  failed: number;
+  skipped: number;
+  error: number;
+  tests: TestCaseResult[];
+};
+
+export type TestRunResult = {
+  status: string;
+  message: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  duration_ms: number;
+  exitstatus?: number | null;
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+    error: number;
+  };
+  tests: TestCaseResult[];
+  by_class: TestClassResult[];
+  running: boolean;
+};
+
+export type InquireSkillRef = {
+  id: number;
+  name: string;
+  description: string;
+  category: string | null;
+  tags: string[];
+};
+
+export type InquireResponse = {
+  answer: string;
+  mode: string;
+  skills: InquireSkillRef[];
+  error?: string | null;
+};
+
+export type InquireStatus = {
+  openai_configured: boolean;
+  model: string;
+};
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
@@ -213,5 +269,24 @@ export const api = {
 
   syncGitSource(id: number) {
     return request<SyncResult>(`/git-sources/${id}/sync`, { method: "POST" });
+  },
+
+  getTestStatus() {
+    return request<TestRunResult>("/tests/status");
+  },
+
+  runTests() {
+    return request<TestRunResult>("/tests/run", { method: "POST" });
+  },
+
+  getInquireStatus() {
+    return request<InquireStatus>("/inquire/status");
+  },
+
+  inquire(question: string) {
+    return request<InquireResponse>("/inquire", {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    });
   },
 };

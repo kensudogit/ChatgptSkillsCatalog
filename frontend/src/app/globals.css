@@ -1069,3 +1069,241 @@ textarea {
     display: none;
   }
 }
+
+/* ---- Test results page ---- */
+.test-summary-panel {
+  background: linear-gradient(160deg, rgba(232, 236, 255, 0.9), rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(90, 103, 160, 0.18);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.test-status-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.test-status-row p {
+  margin: 0;
+  color: var(--text-muted, #4a5568);
+}
+
+.test-status-badge.is-passed,
+.test-status-badge.is-ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.test-status-badge.is-failed,
+.test-status-badge.is-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.test-status-badge.is-idle,
+.test-status-badge.is-running {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.test-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.test-stat-grid div {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.test-stat-grid strong {
+  font-size: 1.25rem;
+}
+
+.test-stat-grid span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.test-stat-grid .is-passed strong {
+  color: #047857;
+}
+
+.test-stat-grid .is-failed strong {
+  color: #b91c1c;
+}
+
+.test-stat-grid .is-skipped strong {
+  color: #a16207;
+}
+
+.test-class-list h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.test-class-card {
+  border: 1px solid rgba(90, 103, 160, 0.16);
+  border-radius: 14px;
+  margin-bottom: 0.75rem;
+  background: #fff;
+  overflow: hidden;
+}
+
+.test-class-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.test-class-header strong {
+  display: block;
+  font-family: "IBM Plex Mono", monospace;
+  margin-bottom: 0.2rem;
+}
+
+.test-outcome {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.test-outcome.is-passed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.test-outcome.is-failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.test-outcome.is-skipped {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.test-case-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 1rem 1rem;
+  border-top: 1px solid rgba(90, 103, 160, 0.1);
+}
+
+.test-case-list li {
+  padding-top: 0.75rem;
+}
+
+.test-case-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.test-case-row code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.85rem;
+}
+
+.test-longrepr {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+/* ---- Inquire page ---- */
+.inquire-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.inquire-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  min-height: 220px;
+}
+
+.inquire-bubble {
+  max-width: min(780px, 100%);
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(90, 103, 160, 0.14);
+  background: #fff;
+}
+
+.inquire-bubble.is-user {
+  align-self: flex-end;
+  background: linear-gradient(160deg, #eef2ff, #f8fafc);
+}
+
+.inquire-bubble.is-assistant {
+  align-self: flex-start;
+}
+
+.inquire-refs {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(90, 103, 160, 0.12);
+}
+
+.inquire-refs ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.inquire-refs li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.inquire-refs a {
+  font-weight: 600;
+  color: #3730a3;
+}
+
+.inquire-refs span {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.inquire-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.inquire-form textarea {
+  resize: vertical;
+  min-height: 84px;
+}

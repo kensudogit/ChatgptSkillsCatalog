@@ -41,6 +41,8 @@ export default function RootLayout({
               <Link href="/">{messages.nav.catalog}</Link>
               <Link href="/upload">{messages.nav.upload}</Link>
               <Link href="/git">{messages.nav.git}</Link>
+              <Link href="/inquire">{messages.nav.inquire}</Link>
+              <Link href="/tests">{messages.nav.tests}</Link>
               <UsageGuide />
             </nav>
           </header>

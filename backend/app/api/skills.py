@@ -42,6 +42,17 @@ def _safe_filename(name: str, fallback: str = "skill.zip") -> str:
     return cleaned[:180]
 
 
+def ensure_unique_skill_version(db: Session, name: str, version: str | None) -> None:
+    """Reject duplicate (name, version) pairs for uploaded skills."""
+    if not version:
+        return
+    duplicate = db.scalar(
+        select(Skill).where(Skill.name == name, Skill.version == version)
+    )
+    if duplicate:
+        raise HTTPException(status_code=400, detail=msg.DUPLICATE_SKILL_VERSION)
+
+
 @router.get("", response_model=SkillListResponse)
 def list_skills(
     q: str | None = Query(None, description=msg.QUERY_SEARCH),
@@ -217,9 +228,13 @@ async def upload_skill(
         )
 
     try:
-        parsed = parse_skill_zip(data)
+        parsed = parse_skill_zip(data, settings=settings)
     except SkillParseError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+    skill_name = name or parsed["name"]
+    skill_version = version or parsed.get("version")
+    ensure_unique_skill_version(db, skill_name, skill_version)
 
     tag_list: list[str] = []
     if tags:
@@ -231,9 +246,9 @@ async def upload_skill(
     storage_path = storage.save_bytes(data, file.filename, subdir="zips")
 
     skill = Skill(
-        name=name or parsed["name"],
+        name=skill_name,
         description=description if description is not None else (parsed.get("description") or ""),
-        version=version or parsed.get("version"),
+        version=skill_version,
         author=author or parsed.get("author"),
         category=category or parsed.get("category"),
         source_type="upload",

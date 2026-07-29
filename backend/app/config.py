@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     upload_dir: str = "/app/uploads"
     max_upload_size_mb: int = 50
+    max_zip_files: int = 200
+    max_uncompressed_size_mb: int = 200
+    max_compression_ratio: float = 100.0
 
     # Local filesystem by default; set STORAGE_BACKEND=s3 for ECS
     storage_backend: str = "local"
@@ -26,6 +29,12 @@ class Settings(BaseSettings):
 
     git_clone_timeout_sec: int = 120
     git_workdir: str = "/app/git_repos"
+
+    # OpenAI (optional) — used by /api/v1/inquire
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_timeout_sec: float = 45.0
 
     @field_validator("database_url")
     @classmethod
