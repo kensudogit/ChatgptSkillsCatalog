@@ -1,11 +1,15 @@
-"""Rewrite UsageGuide.tsx with up-to-date Japanese content (UTF-8)."""
+"""Rewrite UsageGuide.tsx with up-to-date Japanese content as UTF-8.
+
+This generator stays pure ASCII: Japanese is written as \\uXXXX escapes and
+decoded before writing, which avoids the CP1252 mangling that plain editors
+hit on this Windows setup.
+"""
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "frontend" / "src" / "components" / "UsageGuide.tsx"
 
-# ASCII-only source; \\u escapes become real UTF-8 Japanese when decoded.
 CONTENT = r'''"use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -23,6 +27,9 @@ const copy = {
   claudeTitle: "Claude / Agent Skills \u4e92\u63db",
   claudeLead:
     "\u767b\u9332\u3055\u308c\u305f Skill \u306f Agent Skills \u4ed5\u69d8\u3067 Claude \u4e92\u63db\u6027\u3092\u81ea\u52d5\u5224\u5b9a\u3057\u307e\u3059\u3002\u4e00\u89a7\u306e\u30d0\u30c3\u30b8\u3068\u8a73\u7d30\u753b\u9762\u306e\u6307\u6458\u30ea\u30b9\u30c8\u3067\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002",
+  deployTitle: "\u30c7\u30d7\u30ed\u30a4\u3068 CI/CD",
+  deployLead:
+    "GitHub Actions \u3067\u81ea\u52d5\u30c6\u30b9\u30c8\u3068\u30c7\u30d7\u30ed\u30a4\u3092\u5b9f\u884c\u3057\u307e\u3059\u3002main \u3078\u306e push \u3067 CI \u304c\u52d5\u304d\u3001ECS \u3078\u306e\u30c7\u30d7\u30ed\u30a4\u306f\u624b\u52d5\u5b9f\u884c\u307e\u305f\u306f\u6709\u52b9\u5316\u6642\u306b\u8d70\u308a\u307e\u3059\u3002",
 };
 
 const techTags = [
@@ -32,6 +39,7 @@ const techTags = [
   "FastAPI",
   "PostgreSQL",
   "Docker",
+  "GitHub Actions",
   "Railway / ECS",
   "Claude Compat",
   "Git Sync",
@@ -42,6 +50,7 @@ const architectureItems = [
   "FastAPI - Skill CRUD\u30fbZIP \u89e3\u6790\u30fb\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30fbGit \u540c\u671f\u30fbClaude \u4e92\u63db\u5224\u5b9a",
   "PostgreSQL - Skill\u30fb\u30bf\u30b0\u30fbGit \u30bd\u30fc\u30b9\u60c5\u5831",
   "Docker / Railway / ECS - \u958b\u767a\u74b0\u5883\u3068\u672c\u756a\u5b9f\u884c\u74b0\u5883",
+  "GitHub Actions - CI\uff08\u30c6\u30b9\u30c8\u30fb\u30d3\u30eb\u30c9\uff09\u3068 ECS \u3078\u306e CD",
 ];
 
 const steps = [
@@ -49,7 +58,7 @@ const steps = [
     number: "01",
     title: "\u30ab\u30bf\u30ed\u30b0\u3092\u691c\u7d22\u3059\u308b",
     description:
-      "\u30c8\u30c3\u30d7\u753b\u9762\u306e\u691c\u7d22\u6b04\u306b\u540d\u524d\u30fb\u8aac\u660e\u30fb\u30bf\u30b0\u3092\u5165\u529b\u3057\u307e\u3059\u3002\u30ab\u30c6\u30b4\u30ea\u3001\u30bf\u30b0\u3001\u767b\u9332\u5143\uff08\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9 / Git \u9023\u643a\uff09\u3001\u4e26\u3073\u9806\u3001Claude \u5224\u5b9a\u3067\u7d5e\u308a\u8fbc\u3081\u307e\u3059\u3002`/` \u30ad\u30fc\u3067\u691c\u7d22\u6b04\u306b\u30d5\u30a9\u30fc\u30ab\u30b9\u3067\u304d\u307e\u3059\u3002",
+      "\u30c8\u30c3\u30d7\u753b\u9762\u306e\u691c\u7d22\u6b04\u306b\u540d\u524d\u30fb\u8aac\u660e\u30fb\u30bf\u30b0\u3092\u5165\u529b\u3057\u307e\u3059\u3002\u30ab\u30c6\u30b4\u30ea\u3001\u30bf\u30b0\u3001\u767b\u9332\u5143\uff08\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9 / Git \u9023\u643a\uff09\u3001\u4e26\u3073\u9806\u3001Claude \u5224\u5b9a\u3067\u7d5e\u308a\u8fbc\u3081\u307e\u3059\u3002/ \u30ad\u30fc\u3067\u691c\u7d22\u6b04\u306b\u30d5\u30a9\u30fc\u30ab\u30b9\u3067\u304d\u307e\u3059\u3002",
     note:
       "\u30ab\u30fc\u30c9\u4e0a\u306e Claude \u30d0\u30c3\u30b8\u3067\u4e92\u63db / \u6ce8\u610f / \u975e\u4e92\u63db\u3092\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002\u30bf\u30b0\u30d0\u30c3\u30b8\u3092\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u305d\u306e\u30bf\u30b0\u3067\u7d5e\u308a\u8fbc\u3081\u307e\u3059\u3002",
   },
@@ -77,6 +86,14 @@ const steps = [
     note:
       "\u300c\u5171\u6709\u30ea\u30f3\u30af\u3092\u30b3\u30d4\u30fc\u300d\u3067 URL \u3092\u5171\u6709\u3067\u304d\u307e\u3059\u3002\u300cZIP \u3092\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u300d\u3067 ChatGPT / Claude / Cursor \u3078\u53d6\u308a\u8fbc\u3081\u308b\u30d1\u30c3\u30b1\u30fc\u30b8\u3092\u53d6\u5f97\u3067\u304d\u307e\u3059\u3002",
   },
+  {
+    number: "05",
+    title: "\u5909\u66f4\u3092\u30c7\u30d7\u30ed\u30a4\u3059\u308b",
+    description:
+      "main \u3078 push \u3059\u308b\u3068 CI \u304c\u30d0\u30c3\u30af\u30a8\u30f3\u30c9\u30c6\u30b9\u30c8\u3001\u30d5\u30ed\u30f3\u30c8\u30a8\u30f3\u30c9\u306e\u578b\u30c1\u30a7\u30c3\u30af\u3068\u30d3\u30eb\u30c9\u3001Docker \u30a4\u30e1\u30fc\u30b8\u30d3\u30eb\u30c9\u3092\u5b9f\u884c\u3057\u307e\u3059\u3002",
+    note:
+      "ECS \u3078\u306e\u30c7\u30d7\u30ed\u30a4\u306f Actions \u30bf\u30d6\u306e Deploy ECS \u3092\u624b\u52d5\u5b9f\u884c\u3059\u308b\u304b\u3001\u30ea\u30dd\u30b8\u30c8\u30ea\u5909\u6570 ENABLE_ECS_DEPLOY \u3092 true \u306b\u3057\u3066\u81ea\u52d5\u5316\u3057\u307e\u3059\u3002",
+  },
 ];
 
 const claudeRules = [
@@ -86,11 +103,19 @@ const claudeRules = [
   "version / author / category / tags \u306f\u30ab\u30bf\u30ed\u30b0\u7528\u30e1\u30bf\u3067\u3059\u3002Agent Skills \u4ed5\u69d8\u3067\u306f metadata: \u914d\u4e0b\u3082\u53ef",
 ];
 
+const deployItems = [
+  "CI - \u30d0\u30c3\u30af\u30a8\u30f3\u30c9 pytest\u3001\u30d5\u30ed\u30f3\u30c8\u30a8\u30f3\u30c9\u578b\u30c1\u30a7\u30c3\u30af\u3068\u30d3\u30eb\u30c9\u3001Docker \u30a4\u30e1\u30fc\u30b8\u30d3\u30eb\u30c9",
+  "CD - ECR \u3078\u30a4\u30e1\u30fc\u30b8\u3092 push \u3057\u3001ECS \u30b5\u30fc\u30d3\u30b9\u3092\u66f4\u65b0",
+  "Railway - \u30eb\u30fc\u30c8 Dockerfile \u306e\u5358\u4e00\u30b3\u30f3\u30c6\u30ca\u3067 1 \u3064\u306e URL \u3067\u516c\u958b",
+  "\u6709\u52b9\u5316\u306b\u306f ENABLE_ECS_DEPLOY \u3068 AWS \u8a8d\u8a3c\u60c5\u5831\uff08OIDC \u63a8\u5968\uff09\u306e\u8a2d\u5b9a\u304c\u5fc5\u8981",
+];
+
 const cautions = [
   "\u6a5f\u5bc6\u60c5\u5831\u3084\u8a8d\u8a3c\u60c5\u5831\u3092 SKILL.md \u3084 ZIP \u306b\u542b\u3081\u306a\u3044\u3067\u304f\u3060\u3055\u3044\u3002",
   "\u30d7\u30e9\u30a4\u30d9\u30fc\u30c8 Git \u306e\u30c8\u30fc\u30af\u30f3\u306f\u5fc5\u8981\u6700\u5c0f\u9650\u306e\u6a29\u9650\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
   "\u5171\u6709\u30fb\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u524d\u306b\u4f5c\u8005\u30fb\u30d0\u30fc\u30b8\u30e7\u30f3\u30fbClaude \u4e92\u63db\u6027\u30fb\u624b\u9806\u5185\u5bb9\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
   "Claude \u3067\u4f7f\u3046\u5834\u5408\u306f\u3001\u975e\u4e92\u63db\u30d0\u30c3\u30b8\u304c\u4ed8\u3044\u305f Skill \u306e\u307e\u307e\u914d\u5e03\u3057\u306a\u3044\u3067\u304f\u3060\u3055\u3044\u3002",
+  "\u672c\u756a\u30c7\u30d7\u30ed\u30a4\u306f CI \u304c\u6210\u529f\u3057\u305f\u30b3\u30df\u30c3\u30c8\u3092\u5bfe\u8c61\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
 ];
 
 export default function UsageGuide() {
@@ -222,7 +247,7 @@ export default function UsageGuide() {
                 <pre>{`pcb-design-review/
 |- SKILL.md       # required (folder name == name)
 |- references/    # optional
-\\- scripts/       # optional`}</pre>
++- scripts/       # optional`}</pre>
                 <div className="guide-code-caption">SKILL.md frontmatter (Claude compatible)</div>
                 <pre>{`---
 name: pcb-design-review
@@ -235,18 +260,44 @@ tags: [pcb, review, quality]
 ---`}</pre>
               </section>
 
+              <section className="guide-architecture">
+                <div className="guide-section-title">
+                  <span>DEPLOY</span>
+                  <strong>{copy.deployTitle}</strong>
+                </div>
+                <p>{copy.deployLead}</p>
+                <ul>
+                  {deployItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="guide-format">
+                <p className="guide-subheading">CI / CD PIPELINE</p>
+                <pre>{`push / pull_request  ->  .github/workflows/ci.yml
+  |- backend    pytest
+  |- frontend   tsc --noEmit + next build
+  +- docker     backend / frontend / combined image
+
+Deploy ECS  ->  .github/workflows/deploy-ecs.yml
+  |- trigger    workflow_dispatch, or push when ENABLE_ECS_DEPLOY=true
+  |- build      push images to ECR (tag = commit sha)
+  +- release    render task definition -> ECS update -> wait stability`}</pre>
+              </section>
+
               <section className="guide-topology">
                 <p className="guide-subheading">SERVICE TOPOLOGY</p>
                 <pre>{`Browser
   |- /              Catalog, Search, Claude filter
   |- /upload        ZIP Registration
   |- /git           Repository Sync
-  \\- /skills/:id    Detail / Edit / Download / Share
+  +- /skills/:id    Detail / Edit / Download / Share
          |
          v
 FastAPI :8000 -- PostgreSQL :5432
          |------ Local Volume / S3
-         \\------ Git Repository`}</pre>
+         +------ Git Repository`}</pre>
               </section>
 
               <section className="guide-caution">
@@ -267,22 +318,15 @@ FastAPI :8000 -- PostgreSQL :5432
 '''
 
 decoded = CONTENT.encode("ascii").decode("unicode_escape")
-# unicode_escape turns intentional JS escapes like \n in template? Our CONTENT uses real newlines
-# and only \uXXXX - but decode will also interpret \n in the pre template strings as newlines - good.
-# Problem: `\\- scripts` becomes `\- scripts` which is what we want in the TS source.
-# And `\\u` - we used raw string with \u so encode ascii decode unicode_escape works.
-# But `\\-` in raw string is `\\-` - decode unicode_escape leaves `\\-` as `\-`? 
-# In raw string r'\\-' is backslash-backslash-hyphen? No r'\\-' is \\ and - which is two chars \ and -
-# Actually in r'''...\\- scripts...''' the \\ is one backslash in the string... wait
-# In raw strings, \\ is two characters: \ and \
-# So r'\\-' is \, \, - 
-# encode ascii decode unicode_escape: \\ becomes \, so we get \- in output - good for TS template.
-
 OUT.write_text(decoded, encoding="utf-8", newline="\n")
-print(f"wrote {OUT} ({OUT.stat().st_size} bytes)")
-# sanity
+print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
+
 text = OUT.read_text(encoding="utf-8")
-assert "????" in text
-assert "Claude / Agent Skills" in text
-assert "ZIP ???????" in text or "??????" in text
+for expected in (
+    "\u5229\u7528\u624b\u9806",
+    "Claude / Agent Skills \u4e92\u63db",
+    "\u30c7\u30d7\u30ed\u30a4\u3068 CI/CD",
+    "ENABLE_ECS_DEPLOY",
+):
+    assert expected in text, expected
 print("utf-8 ok")

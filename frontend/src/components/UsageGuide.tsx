@@ -15,6 +15,9 @@ const copy = {
   claudeTitle: "Claude / Agent Skills 互換",
   claudeLead:
     "登録された Skill は Agent Skills 仕様で Claude 互換性を自動判定します。一覧のバッジと詳細画面の指摘リストで確認できます。",
+  deployTitle: "デプロイと CI/CD",
+  deployLead:
+    "GitHub Actions で自動テストとデプロイを実行します。main への push で CI が動き、ECS へのデプロイは手動実行または有効化時に走ります。",
 };
 
 const techTags = [
@@ -24,6 +27,7 @@ const techTags = [
   "FastAPI",
   "PostgreSQL",
   "Docker",
+  "GitHub Actions",
   "Railway / ECS",
   "Claude Compat",
   "Git Sync",
@@ -34,6 +38,7 @@ const architectureItems = [
   "FastAPI - Skill CRUD・ZIP 解析・ダウンロード・Git 同期・Claude 互換判定",
   "PostgreSQL - Skill・タグ・Git ソース情報",
   "Docker / Railway / ECS - 開発環境と本番実行環境",
+  "GitHub Actions - CI（テスト・ビルド）と ECS への CD",
 ];
 
 const steps = [
@@ -41,7 +46,7 @@ const steps = [
     number: "01",
     title: "カタログを検索する",
     description:
-      "トップ画面の検索欄に名前・説明・タグを入力します。カテゴリ、タグ、登録元（アップロード / Git 連携）、並び順、Claude 判定で絞り込めます。`/` キーで検索欄にフォーカスできます。",
+      "トップ画面の検索欄に名前・説明・タグを入力します。カテゴリ、タグ、登録元（アップロード / Git 連携）、並び順、Claude 判定で絞り込めます。/ キーで検索欄にフォーカスできます。",
     note:
       "カード上の Claude バッジで互換 / 注意 / 非互換を確認できます。タグバッジをクリックするとそのタグで絞り込めます。",
   },
@@ -69,6 +74,14 @@ const steps = [
     note:
       "「共有リンクをコピー」で URL を共有できます。「ZIP をダウンロード」で ChatGPT / Claude / Cursor へ取り込めるパッケージを取得できます。",
   },
+  {
+    number: "05",
+    title: "変更をデプロイする",
+    description:
+      "main へ push すると CI がバックエンドテスト、フロントエンドの型チェックとビルド、Docker イメージビルドを実行します。",
+    note:
+      "ECS へのデプロイは Actions タブの Deploy ECS を手動実行するか、リポジトリ変数 ENABLE_ECS_DEPLOY を true にして自動化します。",
+  },
 ];
 
 const claudeRules = [
@@ -78,11 +91,19 @@ const claudeRules = [
   "version / author / category / tags はカタログ用メタです。Agent Skills 仕様では metadata: 配下も可",
 ];
 
+const deployItems = [
+  "CI - バックエンド pytest、フロントエンド型チェックとビルド、Docker イメージビルド",
+  "CD - ECR へイメージを push し、ECS サービスを更新",
+  "Railway - ルート Dockerfile の単一コンテナで 1 つの URL で公開",
+  "有効化には ENABLE_ECS_DEPLOY と AWS 認証情報（OIDC 推奨）の設定が必要",
+];
+
 const cautions = [
   "機密情報や認証情報を SKILL.md や ZIP に含めないでください。",
   "プライベート Git のトークンは必要最小限の権限にしてください。",
   "共有・ダウンロード前に作者・バージョン・Claude 互換性・手順内容を確認してください。",
   "Claude で使う場合は、非互換バッジが付いた Skill のまま配布しないでください。",
+  "本番デプロイは CI が成功したコミットを対象にしてください。",
 ];
 
 export default function UsageGuide() {
@@ -214,7 +235,7 @@ export default function UsageGuide() {
                 <pre>{`pcb-design-review/
 |- SKILL.md       # required (folder name == name)
 |- references/    # optional
-\- scripts/       # optional`}</pre>
++- scripts/       # optional`}</pre>
                 <div className="guide-code-caption">SKILL.md frontmatter (Claude compatible)</div>
                 <pre>{`---
 name: pcb-design-review
@@ -227,18 +248,44 @@ tags: [pcb, review, quality]
 ---`}</pre>
               </section>
 
+              <section className="guide-architecture">
+                <div className="guide-section-title">
+                  <span>DEPLOY</span>
+                  <strong>{copy.deployTitle}</strong>
+                </div>
+                <p>{copy.deployLead}</p>
+                <ul>
+                  {deployItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="guide-format">
+                <p className="guide-subheading">CI / CD PIPELINE</p>
+                <pre>{`push / pull_request  ->  .github/workflows/ci.yml
+  |- backend    pytest
+  |- frontend   tsc --noEmit + next build
+  +- docker     backend / frontend / combined image
+
+Deploy ECS  ->  .github/workflows/deploy-ecs.yml
+  |- trigger    workflow_dispatch, or push when ENABLE_ECS_DEPLOY=true
+  |- build      push images to ECR (tag = commit sha)
+  +- release    render task definition -> ECS update -> wait stability`}</pre>
+              </section>
+
               <section className="guide-topology">
                 <p className="guide-subheading">SERVICE TOPOLOGY</p>
                 <pre>{`Browser
   |- /              Catalog, Search, Claude filter
   |- /upload        ZIP Registration
   |- /git           Repository Sync
-  \- /skills/:id    Detail / Edit / Download / Share
+  +- /skills/:id    Detail / Edit / Download / Share
          |
          v
 FastAPI :8000 -- PostgreSQL :5432
          |------ Local Volume / S3
-         \------ Git Repository`}</pre>
+         +------ Git Repository`}</pre>
               </section>
 
               <section className="guide-caution">
