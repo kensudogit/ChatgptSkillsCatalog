@@ -157,13 +157,35 @@ Notes:
 - Driver-less URLs (`postgres://`, `postgresql://`) are normalized to
   `postgresql+psycopg2://` by the backend settings.
 
+## CI/CD
+
+GitHub Actions workflows:
+
+| Workflow | File | Trigger | Purpose |
+|---|---|---|---|
+| CI | `.github/workflows/ci.yml` | PR / push to `main` | Backend pytest, frontend typecheck/build, Docker image build |
+| Deploy ECS | `.github/workflows/deploy-ecs.yml` | manual, or push to `main` when enabled | ECR push + ECS service update |
+
+### Enable ECS auto-deploy
+
+1. Create GitHub Environment `production`
+2. Set repository **Variables**:
+   - `ENABLE_ECS_DEPLOY=true` (required for push-based deploy)
+   - `AWS_REGION`, `ECS_CLUSTER`, `ECS_SERVICE`, `ECR_BACKEND_REPO`, `ECR_FRONTEND_REPO`, `FRONTEND_API_BASE_URL`
+3. Set repository **Secrets** (prefer OIDC):
+   - `AWS_ROLE_TO_ASSUME` = IAM role ARN for GitHub Actions
+   - or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
+4. Run **Deploy ECS** from the Actions tab (`workflow_dispatch`) for the first deploy
+
+Details: [infrastructure/ecs/README.md](infrastructure/ecs/README.md)
+
 ## AWS ECS deployment
 
 See [infrastructure/ecs/README.md](infrastructure/ecs/README.md).
 
 Summary:
 
-1. Push backend / frontend images to ECR
+1. Push backend / frontend images to ECR (CI/CD or manual)
 2. Prepare RDS PostgreSQL, S3 bucket, Secrets Manager
 3. Register `task-definition.json` and update the ECS service
 
@@ -185,4 +207,3 @@ Summary:
 | `NEXT_PUBLIC_API_BASE_URL` | API base URL (e.g. `http://localhost:8000/api/v1`) |
 
 > Production builds embed `NEXT_PUBLIC_*` at build time. Pass the public API URL via `--build-arg` when building the ECS frontend image.
-"# ChatgptSkillsCatalog" 
