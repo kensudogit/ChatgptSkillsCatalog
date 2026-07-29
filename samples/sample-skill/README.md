@@ -1,6 +1,6 @@
 # sample-pcb-checklist
 
-Claude 互換のサンプル Skill です。ZIP 生成:
+書式研究用サンプルの基準形式です。全体の生成:
 
 ```bash
 python scripts/build_sample_skills.py
