@@ -1,5 +1,9 @@
 # ChatGPT Skills Catalog
 
+> **AI Developer Platform** · Central catalog for registering, searching, sharing and synchronizing reusable AI/ChatGPT Skills from ZIP packages and Git repositories.
+>
+> **Stack:** Python 3.12 · FastAPI · Next.js 15 · React 19 · TypeScript · PostgreSQL · AWS ECS
+
 Internal web application for centrally managing, searching, and sharing ChatGPT Skills.
 
 ## Stack
