@@ -4,6 +4,10 @@
 >
 > **Stack:** Python 3.12 · FastAPI · Next.js 15 · React 19 · TypeScript · PostgreSQL · AWS ECS
 
+> **AI Developer Platform** — Reusable AI/ChatGPT Skillsを登録・検索・共有し、ZIPやGitリポジトリから同期できる中央カタログです。
+>
+> **Stack:** Python 3.12 · FastAPI · Next.js 15 · React 19 · TypeScript · PostgreSQL
+
 Internal web application for centrally managing, searching, and sharing ChatGPT Skills.
 
 ## Stack
