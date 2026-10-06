@@ -12,6 +12,17 @@
 >
 > **Stack:** Python 3.12 · FastAPI · Next.js 15 · React 19 · TypeScript · PostgreSQL
 
+
+## Portfolio Overview
+
+| | |
+|---|---|
+| **Problem** | Reusable AI skills become fragmented across ZIP files, repositories and individual development environments. |
+| **Solution** | Central catalog for registering, searching, sharing and synchronizing reusable AI/ChatGPT Skills. |
+| **Architecture** | Next.js UI → FastAPI catalog API → PostgreSQL, with ZIP ingestion, Git synchronization and deployable storage/runtime layers. |
+| **Differentiators** | SKILL.md metadata ingestion, Git/ZIP synchronization, searchable catalog, reusable engineering workflow and AWS-ready deployment. |
+| **Stack** | Python 3.12 · FastAPI · Next.js 15 · React 19 · TypeScript · PostgreSQL · AWS ECS |
+
 Internal web application for centrally managing, searching, and sharing ChatGPT Skills.
 
 ## Stack
